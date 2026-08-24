@@ -1,71 +1,50 @@
-"""Smoke tests for the template application.
+"""Smoke tests: the lambda entrypoint and both schema exports must work.
 
-These validate that modules are importable, the config schema is well-formed,
-the Tags/UI classes subclass the correct bases, and the config export entry
-point runs end-to-end.
+These are what break first when a pydoover API shifts under us, and they are
+what `doover app publish` runs before uploading anything.
 """
 
 import json
+from pathlib import Path
 
-from pydoover.config import Schema
-from pydoover.tags import Tags
-from pydoover.ui import UI
-
-
-def test_import_app():
-    from indratel_demo.application import IndratelDemoApplication
-    assert IndratelDemoApplication.config_cls is not None
-    assert IndratelDemoApplication.tags_cls is not None
-    assert IndratelDemoApplication.ui_cls is not None
+CONFIG_PATH = Path(__file__).parents[1] / "doover_config.json"
 
 
-def test_config_schema():
+def test_handler_importable():
+    from indratel_demo import handler
+
+    assert callable(handler)
+
+
+def test_application_wiring():
+    from indratel_demo.application import IndratelDemoApp
     from indratel_demo.app_config import IndratelDemoConfig
-    assert issubclass(IndratelDemoConfig, Schema)
-
-    schema = IndratelDemoConfig.to_schema()
-    assert isinstance(schema, dict)
-    assert schema["type"] == "object"
-    assert len(schema["properties"]) > 0
-    assert "a_funny_message" in schema["required"]
-    assert "simulator_app_key" in schema["required"]
-
-
-def test_tags():
-    from indratel_demo.app_tags import SampleTags
-    assert issubclass(SampleTags, Tags)
-
-
-def test_ui():
-    from indratel_demo.app_ui import IndratelDemoUI
-    assert issubclass(IndratelDemoUI, UI)
-
-
-def test_state_machine():
-    from indratel_demo.app_state import IndratelDemoState
-    state = IndratelDemoState()
-    assert state.state == "off"
-
-
-def test_config_export(tmp_path):
-    from indratel_demo.app_config import IndratelDemoConfig
-
-    fp = tmp_path / "doover_config.json"
-    IndratelDemoConfig.export(fp, "indratel_demo")
-
-    data = json.loads(fp.read_text())
-    assert "indratel_demo" in data
-    assert "config_schema" in data["indratel_demo"]
-    assert "properties" in data["indratel_demo"]["config_schema"]
-
-
-def test_ui_export(tmp_path):
     from indratel_demo.app_ui import IndratelDemoUI
 
-    fp = tmp_path / "doover_config.json"
-    IndratelDemoUI(None, None, None).export(fp, "indratel_demo")
+    assert IndratelDemoApp.config_cls is IndratelDemoConfig
+    assert IndratelDemoApp.ui_cls is IndratelDemoUI
 
-    data = json.loads(fp.read_text())
-    assert "ui_schema" in data["indratel_demo"]
-    assert data["indratel_demo"]["ui_schema"]["type"] == "uiApplication"
-    assert "is_working" in data["indratel_demo"]["ui_schema"]["children"]
+
+def test_config_keys_match_ui_references():
+    """`app_ui.py` resolves `$config.app().<key>` at runtime, and the key is
+    derived from the config element's *display name*. A mismatch fails silently
+    in production, so assert the two line up here."""
+    config = json.loads(CONFIG_PATH.read_text())["indratel_demo"]
+    properties = set(config["config_schema"]["properties"])
+    widget = config["ui_schema"]["children"]["IndratelDemoWidget"]
+
+    referenced = {
+        value.split(".")[-1].removeprefix("()")
+        for value in widget.values()
+        if isinstance(value, str) and value.startswith("$config.app().")
+    }
+    # APP_KEY and dv_widget_url are injected by the platform, not by our schema.
+    referenced -= {"APP_KEY", "dv_widget_url"}
+
+    assert referenced <= properties, f"unresolvable config refs: {referenced - properties}"
+
+
+def test_widget_is_declared():
+    config = json.loads(CONFIG_PATH.read_text())["indratel_demo"]
+    assert config["widget"] == "dashboard-widget/assets/IndratelDemoWidget.js"
+    assert config["ui_schema"]["children"]["IndratelDemoWidget"]["scope"] == "IndratelDemoWidget"

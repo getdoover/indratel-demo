@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Doover packaging
+package.zip
+packages_export
+requirements.txt
+
+# Widget build output
+dashboard-widget/assets/
+dashboard-widget/node_modules/
+dashboard-widget/dist/

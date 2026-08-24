@@ -2,52 +2,24 @@ from pathlib import Path
 
 from pydoover import ui
 
-from .app_tags import SampleTags
 
-
-class IndratelDemoUI(ui.UI):
-    is_working = ui.BooleanVariable("We Working?", value=SampleTags.is_working, name="is_working")
-    uptime = ui.NumericVariable("Uptime", value=SampleTags.uptime, name="uptime")
-
-    send_alert = ui.Button("Send message as alert", name="send_alert", position=1)
-    text_parameter = ui.TextInput("Put in a message", name="test_message")
-    test_output = ui.TextVariable("This is message we got", value=SampleTags.test_output, name="test_output")
-
-    battery = ui.Submodule(
-        "Battery Module",
-        name="battery",
-        children=[
-            ui.NumericVariable(
-                "Battery Voltage",
-                value=SampleTags.battery_voltage,
-                name="voltage",
-                precision=2,
-                ranges=[
-                    ui.Range("Low", 0, 10, ui.Colour.red),
-                    ui.Range("Normal", 10, 20, ui.Colour.green),
-                    ui.Range("High", 20, 30, ui.Colour.blue),
-                ],
-            ),
-            ui.FloatInput("Low Voltage Alert", name="low_voltage_alert"),
-            ui.Select(
-                "Charge Mode",
-                name="charge_mode",
-                options=[
-                    ui.Option("Charge"),
-                    ui.Option("Discharge"),
-                    ui.Option("Idle"),
-                ],
-            ),
-        ],
+class IndratelDemoUI(ui.UI, default_open=True):
+    widget = ui.RemoteComponent(
+        name="IndratelDemoWidget",
+        display_name="Site Overview",
+        component_url="$config.app().dv_widget_url",
+        scope="IndratelDemoWidget",
+        module="./IndratelDemoWidget",
+        app_key="$config.app().APP_KEY",
+        site_name="$config.app().site_name",
+        tank_1_app="$config.app().tank_1_app",
+        tank_2_app="$config.app().tank_2_app",
+        flow_meter_app="$config.app().flow_meter_app",
+        rain_gauge_app="$config.app().rain_gauge_app",
     )
 
 
 def export():
     IndratelDemoUI(None, None, None).export(
-        Path(__file__).parents[2] / "doover_config.json",
-        "indratel_demo",
+        Path(__file__).parents[2] / "doover_config.json", "indratel_demo"
     )
-
-
-if __name__ == "__main__":
-    export()

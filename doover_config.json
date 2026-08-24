@@ -1,200 +1,153 @@
 {
     "indratel_demo": {
         "name": "indratel_demo",
-        "display_name": "indratel-demo",
-        "type": "DEV",
+        "display_name": "Site Overview",
+        "type": "PRO",
         "visibility": "PUB",
-        "allow_many": true,
-        "description": "Polished demo dashboard widget for the Indratel demo site - live tank levels, flow and rainfall",
+        "allow_many": false,
+        "description": "Polished site-overview dashboard for the Indratel demo device - live tank levels, flow and rainfall in one panel.",
         "long_description": "README.md",
         "depends_on": [],
-        "owner_org_key": "FIX-ME",
-        "image_name": "ghcr.io/getdoover/indratel-demo:main",
-        "container_registry_profile_key": "FIX-ME",
-        "build_args": "--platform linux/amd64,linux/arm64",
+        "handler": "src.indratel_demo.handler",
+        "lambda_config": {
+            "Runtime": "python3.13",
+            "Timeout": 300,
+            "MemorySize": 128,
+            "Handler": "src.indratel_demo.handler"
+        },
+        "organisation_id": 182001610510090497,
+        "key": null,
+        "owner_org_id": 182001610510090497,
+        "code_repo_id": null,
+        "container_registry_profile_id": null,
+        "repo_branch": "main",
+        "image_name": null,
+        "icon_url": "",
+        "staging_config": {},
+        "export_config_command": "export-config",
+        "export_ui_command": "export-ui",
+        "build_widget_command": "npm --prefix dashboard-widget run build",
+        "widget": "dashboard-widget/assets/IndratelDemoWidget.js",
+        "run_command": null,
+        "lambda_arn": null,
         "config_schema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "",
             "title": "$default",
             "type": "object",
             "properties": {
-                "digital_outputs_enabled": {
-                    "title": "Digital Outputs Enabled",
-                    "x-name": "digital_outputs_enabled",
+                "dv_proc_subscriptions": {
+                    "title": "Channel Subscription",
+                    "x-name": "dv_proc_subscriptions",
                     "x-hidden": false,
                     "type": [
-                        "boolean",
+                        "string",
                         "null"
                     ],
                     "x-required": false,
-                    "default": true,
+                    "description": "The name of the channel to subscribe to",
+                    "default": "deployment_config",
                     "x-position": 0
                 },
-                "a_funny_message": {
-                    "title": "A Funny Message",
-                    "x-name": "a_funny_message",
+                "site_name": {
+                    "title": "Site Name",
+                    "x-name": "site_name",
                     "x-hidden": false,
-                    "type": "string",
-                    "x-required": true,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "Heading shown at the top of the dashboard.",
+                    "default": "Indratel Demo Site",
                     "x-position": 1
                 },
-                "simulator_app_key": {
-                    "title": "Simulator App Key",
-                    "x-name": "simulator_app_key",
+                "tank_1_app": {
+                    "title": "Tank 1 App",
+                    "x-name": "tank_1_app",
                     "x-hidden": false,
-                    "format": "doover-resource-application",
-                    "type": "string",
-                    "x-required": true,
-                    "description": "The app key for the simulator",
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "App install key of the 4-20mA sensor measuring tank 1 (as it appears on the device).",
+                    "default": "4_20ma_sensor_1",
                     "x-position": 2
+                },
+                "tank_2_app": {
+                    "title": "Tank 2 App",
+                    "x-name": "tank_2_app",
+                    "x-hidden": false,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "App install key of the 4-20mA sensor measuring tank 2 (as it appears on the device).",
+                    "default": "4_20ma_sensor_2",
+                    "x-position": 3
+                },
+                "flow_meter_app": {
+                    "title": "Flow Meter App",
+                    "x-name": "flow_meter_app",
+                    "x-hidden": false,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "App install key of the analog flow meter.",
+                    "default": "analog_flow_meter_1",
+                    "x-position": 4
+                },
+                "rain_gauge_app": {
+                    "title": "Rain Gauge App",
+                    "x-name": "rain_gauge_app",
+                    "x-hidden": false,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "App install key of the analog rain gauge. Leave as-is if not installed yet - the panel stays dormant until it reports.",
+                    "default": "analog_rain_gauge_1",
+                    "x-position": 5
                 }
             },
             "additionalElements": true,
-            "required": [
-                "a_funny_message",
-                "simulator_app_key"
-            ]
+            "required": []
         },
+        "banner_url": null,
         "ui_schema": {
             "displayString": "$config.app().APP_DISPLAY_NAME",
             "hidden": "$config.app().hidden:boolean:false:boolean:false",
             "position": "$config.app().dv_app_position:number:100",
             "icon": null,
             "colour": null,
-            "defaultOpen": false,
+            "defaultOpen": true,
             "type": "uiApplication",
             "name": "$config.app().APP_KEY",
             "children": {
-                "is_working": {
-                    "name": "is_working",
-                    "type": "uiVariable",
-                    "displayString": "We Working?",
+                "IndratelDemoWidget": {
+                    "name": "IndratelDemoWidget",
+                    "type": "uiRemoteComponent",
+                    "displayString": "Site Overview",
                     "showActivity": true,
+                    "componentUrl": "$config.app().dv_widget_url",
                     "position": 51,
                     "hidden": false,
-                    "varType": "bool",
-                    "currentValue": "$tag.app().is_working:boolean:false"
-                },
-                "uptime": {
-                    "name": "uptime",
-                    "type": "uiVariable",
-                    "displayString": "Uptime",
-                    "showActivity": true,
-                    "position": 52,
-                    "hidden": false,
-                    "varType": "float",
-                    "currentValue": "$tag.app().uptime:number:0"
-                },
-                "send_alert": {
-                    "name": "send_alert",
-                    "type": "uiButton",
-                    "displayString": "Send message as alert",
-                    "position": 1,
-                    "hidden": false,
-                    "currentValue": "$cmds.app().send_alert",
-                    "appKey": "$config.app().APP_KEY"
-                },
-                "test_message": {
-                    "name": "test_message",
-                    "type": "uiTextInput",
-                    "displayString": "Put in a message",
-                    "position": 54,
-                    "hidden": false,
-                    "currentValue": "$cmds.app().test_message",
-                    "appKey": "$config.app().APP_KEY",
-                    "isTextArea": false
-                },
-                "test_output": {
-                    "name": "test_output",
-                    "type": "uiVariable",
-                    "displayString": "This is message we got",
-                    "showActivity": true,
-                    "position": 55,
-                    "hidden": false,
-                    "varType": "string",
-                    "currentValue": "$tag.app().test_output:string:\"\""
-                },
-                "battery": {
-                    "name": "battery",
-                    "type": "uiSubmodule",
-                    "displayString": "Battery Module",
-                    "showActivity": true,
-                    "position": 59,
-                    "hidden": false,
-                    "children": {
-                        "voltage": {
-                            "name": "voltage",
-                            "type": "uiVariable",
-                            "displayString": "Battery Voltage",
-                            "showActivity": true,
-                            "position": 56,
-                            "hidden": false,
-                            "varType": "float",
-                            "currentValue": "$tag.app().battery_voltage:number:0",
-                            "decPrecision": 2,
-                            "ranges": [
-                                {
-                                    "min": 0,
-                                    "max": 10,
-                                    "colour": "red",
-                                    "show_on_graph": true,
-                                    "label": "Low"
-                                },
-                                {
-                                    "min": 10,
-                                    "max": 20,
-                                    "colour": "green",
-                                    "show_on_graph": true,
-                                    "label": "Normal"
-                                },
-                                {
-                                    "min": 20,
-                                    "max": 30,
-                                    "colour": "blue",
-                                    "show_on_graph": true,
-                                    "label": "High"
-                                }
-                            ]
-                        },
-                        "low_voltage_alert": {
-                            "name": "low_voltage_alert",
-                            "type": "uiFloatInput",
-                            "displayString": "Low Voltage Alert",
-                            "position": 57,
-                            "hidden": false,
-                            "currentValue": "$cmds.app().low_voltage_alert",
-                            "appKey": "$config.app().APP_KEY"
-                        },
-                        "charge_mode": {
-                            "name": "charge_mode",
-                            "type": "uiSelect",
-                            "displayString": "Charge Mode",
-                            "position": 58,
-                            "hidden": false,
-                            "currentValue": "$cmds.app().charge_mode",
-                            "appKey": "$config.app().APP_KEY",
-                            "options": {
-                                "charge": {
-                                    "name": "charge",
-                                    "displayString": "Charge",
-                                    "type": "uiElement"
-                                },
-                                "discharge": {
-                                    "name": "discharge",
-                                    "displayString": "Discharge",
-                                    "type": "uiElement"
-                                },
-                                "idle": {
-                                    "name": "idle",
-                                    "displayString": "Idle",
-                                    "type": "uiElement"
-                                }
-                            }
-                        }
-                    }
+                    "children": {},
+                    "scope": "IndratelDemoWidget",
+                    "module": "./IndratelDemoWidget",
+                    "app_key": "$config.app().APP_KEY",
+                    "site_name": "$config.app().site_name",
+                    "tank_1_app": "$config.app().tank_1_app",
+                    "tank_2_app": "$config.app().tank_2_app",
+                    "flow_meter_app": "$config.app().flow_meter_app",
+                    "rain_gauge_app": "$config.app().rain_gauge_app"
                 }
             }
-        },
-        "organisation_id": "FIX-ME"
+        }
     }
 }

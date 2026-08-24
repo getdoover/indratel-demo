@@ -1,85 +1,73 @@
+# Indratel Demo — Site Overview
 
-# Doover App Template
+A single-panel site overview for the Indratel demo device: two tank levels, the
+flow meter and the rain gauge in one polished view, live off the device's tags.
 
-<img src="https://doover.com/wp-content/uploads/Doover-Logo-Landscape-Navy-padded-small.png" alt="App Icon" style="max-width: 300px;">
+It is a **cloud (processor) app with a React widget**. The Python side does
+almost nothing — it registers a `uiRemoteComponent` so the widget renders on the
+agent page. All the data comes from apps already installed on the same device.
 
-**A ready template for a Doover Application**
+![app type: processor + widget](https://img.shields.io/badge/type-processor%20%2B%20widget-blue)
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/getdoover/indratel-demo/blob/main/LICENSE)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/getdoover/indratel-demo?quickstart=1)
+## What it shows
 
-[Getting Started](#-getting-started) • [Configuration](#configuration) • [Developer](https://github.com/getdoover/indratel-demo/blob/main/DEVELOPMENT.md) • [Need Help?](#need-help)
+| Panel | Source app | Tags read |
+|---|---|---|
+| Tank 1 / Tank 2 | `4_20ma_sensor` | `value`, `raw_value` |
+| Flow meter | `analog_flow_meter` | `flow_rate`, `totaliser`, `flow_active`, `event_*`, `last_event_summary`, `sensor_fault_hidden` |
+| Rain gauge | `analog_rain_gauge` | `since_9am`, `since_event`, `total_rainfall`, `intensity`, `event_started` |
 
-<br/>
+Units, ranges and display names are **not** configured here — they are read from
+each source app's own entry in the device's `deployment_config`, so changing a
+tank's `max_range` or a flow meter's `flow_units` updates the dashboard with no
+redeploy.
 
-## 📖 Overview
+The widget is read-only. Controls (reset totaliser, alarm points, …) stay on
+each source app's own panel, which already renders them.
 
-A ready-to-use template for building Doover applications. This template provides the essential
-structure and configuration needed to quickly get started with app development on the Doover
-platform, using [pydoover](https://github.com/getdoover/pydoover) 1.0.
+## Configuration
 
-Use this repository as a starting point: fork it (or use the "Use this template" button),
-rename the `indratel_demo` package, and replace the sample config, tags, UI, and state machine
-with your own.
+| Key | Default | Meaning |
+|---|---|---|
+| `site_name` | `Indratel Demo Site` | Heading at the top of the dashboard |
+| `tank_1_app` | `4_20ma_sensor_1` | App install key of the first level sensor |
+| `tank_2_app` | `4_20ma_sensor_2` | App install key of the second level sensor |
+| `flow_meter_app` | `analog_flow_meter_1` | App install key of the flow meter |
+| `rain_gauge_app` | `analog_rain_gauge_1` | App install key of the rain gauge |
 
-<br/>
+If a configured key isn't present in `deployment_config`, the widget falls back
+to the nth install of that application type on the device — so the dashboard
+survives an app being renamed or reinstalled. A panel whose source has never
+published tags says so rather than showing a misleading zero.
 
-## 🚀 Getting Started
+## Development
 
-### How to Use
+```bash
+uv sync                                  # Python deps
+uv run export-config && uv run export-ui # regenerate doover_config.json schemas
+npm --prefix dashboard-widget install    # widget deps
+npm --prefix dashboard-widget run build  # -> dashboard-widget/assets/IndratelDemoWidget.js
+uv run pytest tests -v
+```
 
-#### Quick Start Guide
+Publish (builds the widget, exports both schemas, uploads):
 
-Click the **Open in GitHub Codespaces** badge above to launch a ready-to-go development environment with:
-- Python 3.13, uv, and all project dependencies
-- Doover CLI (`doover`) pre-installed — you'll be prompted to log in on first open
-- Claude Code with [doover-skills](https://github.com/getdoover/doover-skills) pre-configured
+```bash
+doover app publish
+```
 
-> **Claude Code:** You'll be prompted for your `ANTHROPIC_API_KEY` when creating a Codespace.
-> Get a key at [console.anthropic.com](https://console.anthropic.com/settings/keys).
-> To skip this prompt in future, save it as a permanent secret at
-> [github.com/settings/codespaces](https://github.com/settings/codespaces).
+## Layout
 
-This Doover App can be managed via the Doover CLI, and installed quickly onto devices through the Doover platform.
-
-### Configuration
-
-Configuration fields are declared in [`src/indratel_demo/app_config.py`](src/indratel_demo/app_config.py).
-The sample schema ships with:
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Digital Outputs Enabled** | Toggle whether the app drives digital outputs | `true` |
-| **A Funny Message** | Free-text message used by the sample alert button | *(required)* |
-| **Simulator App Key** | App key of the simulator supplying `random_value` | *(required)* |
-
-Replace these with your own fields, then regenerate `doover_config.json` with `uv run export-config`.
-
-<br/>
-
-## 🔗 Integrations
-
-### Tags
-
-The sample app publishes a few example tags via [`src/indratel_demo/app_tags.py`](src/indratel_demo/app_tags.py):
-
-| Tag | Description |
-|-----|-------------|
-| **is_working** | Heartbeat — `true` while the main loop is running |
-| **uptime** | Seconds since the app started |
-| **battery_voltage** | Example numeric value sourced from the simulator |
-| **test_output** | Echoes text entered in the UI |
-
-<br/>
-
-### Need Help?
-
-- 📧 Email: support@doover.com
-- 📖 [Doover Documentation](https://docs.doover.com)
-- 👨‍💻 [App Developer Documentation](https://github.com/getdoover/indratel-demo/blob/main/DEVELOPMENT.md)
-
-<br/>
-
-## 📄 License
-
-This app is licensed under the [Apache License 2.0](https://github.com/getdoover/indratel-demo/blob/main/LICENSE).
+```
+src/indratel_demo/
+  __init__.py       # lambda handler -> run_app(IndratelDemoApp())
+  application.py    # processor app; subscribes to deployment_config
+  app_config.py     # config schema (site name + the four app keys)
+  app_ui.py         # the uiRemoteComponent declaration
+dashboard-widget/
+  src/IndratelDemoWidget.tsx  # data wiring, source resolution
+  src/TankPanel.tsx           # animated tank fill graphic
+  src/FlowPanel.tsx           # arc gauge + totaliser + event summary
+  src/RainPanel.tsx           # rainfall stat tiles
+  src/components/ui/          # shadcn-style primitives (Card, Badge, Skeleton)
+```

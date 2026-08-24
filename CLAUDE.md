@@ -1,61 +1,43 @@
-# Doover App Template
+# Indratel Demo (Site Overview)
 
-A template for building device applications on the Doover IoT platform using pydoover 1.0.
+A Doover **cloud processor + React widget** app. The Python side only registers
+the remote component; every value on screen comes from other apps' tags on the
+same device.
 
 ## Commands
 
 ```bash
-uv run pytest tests -v          # Run tests
-uv run export-config             # Write config_schema into doover_config.json
-uv run export-ui                 # Write ui_schema into doover_config.json (required to publish)
-doover app run                   # Run app + simulator locally via docker-compose
+uv sync
+uv run export-config                     # -> doover_config.json config_schema
+uv run export-ui                         # -> doover_config.json ui_schema
+uv run pytest tests -v
+npm --prefix dashboard-widget install
+npm --prefix dashboard-widget run build  # -> dashboard-widget/assets/IndratelDemoWidget.js
+doover app publish                       # exports both schemas, builds + uploads the widget
 ```
 
-## Project Structure
+## Structure
 
 ```
-src/app_template/
-  __init__.py        # Entry point — run_app(SampleApplication())
-  application.py     # Main app class (setup, main_loop, UI handlers)
-  app_config.py      # Config schema — class-level declarations
-  app_tags.py        # Runtime state tags — bound to UI elements
-  app_ui.py          # UI definition — subclasses ui.UI
-  app_state.py       # State machine using pydoover.state.StateMachine
-simulators/sample/   # Simulator app that produces test data
-tests/               # pytest suite
+src/indratel_demo/{__init__,application,app_config,app_ui}.py
+dashboard-widget/src/{IndratelDemoWidget,TankPanel,FlowPanel,RainPanel}.tsx
+dashboard-widget/src/components/ui/   # shadcn-style primitives
 ```
 
-## pydoover 1.0 Patterns
+## Conventions that matter here
 
-This app uses the pydoover 1.0 declarative API. Key patterns:
-
-### Application class (application.py)
-- Set `config_cls`, `tags_cls`, `ui_cls` as class attributes — framework wires them up automatically
-- Override `async def setup()` for init and `async def main_loop()` for the periodic loop
-- Use `@ui.handler("element_name")` for UI interaction callbacks (signature: `self, ctx, value`)
-- Access config via `self.config.<field>.value`, tags via `self.tags.<name>.set(val)` / `.get()`
-- Cross-app tags: `self.get_tag("tag_name", app_key)`
-- Messaging: `await self.create_message(channel, {data})`
-
-### Config (app_config.py)
-- Subclass `config.Schema` with class-level `config.Boolean`, `config.String`, `config.Application`, etc.
-- `export()` is a classmethod: `SampleConfig.export(path, name)`
-
-### Tags (app_tags.py)
-- Subclass `Tags` with class-level `Tag("type", default=...)` declarations
-- Types: "boolean", "number", "integer", "string", "array", "object"
-
-### UI (app_ui.py)
-- Subclass `ui.UI` with class-level element declarations
-- Bind variables to tags: `ui.NumericVariable("Label", value=MyTags.field, name="id")`
-- Element types: `BooleanVariable`, `NumericVariable`, `TextVariable`, `Button`, `TextInput`, `FloatInput`, `Select`, `Submodule`
-- Use explicit `name=` kwarg on interactive elements to match handler names
-
-### State Machine (app_state.py)
-- Uses `pydoover.state.StateMachine` (wraps the `transitions` library)
-- Define `states` and `transitions` as class attributes, `on_enter_<state>()` callbacks
-
-## Doover Skills
-
-If you have the doover-skills plugin installed, use `/doover` to see all available skills.
-Key skills: `/doover-device-apps` for device app development, `/pydoover` for API reference.
+- **Config element names come from the display name**, not the attribute name
+  (`config.String("Tank 1 App")` -> key `tank_1_app`). Keep the attribute name
+  and the sanitized display name identical, or `$config.app().<key>` in
+  `app_ui.py` silently resolves to nothing.
+- **Extra kwargs on `ui.RemoteComponent` are passed straight through** to the
+  widget as fields on `uiElement` — that is how the app keys reach the JS.
+- **Data hooks come from `doover-js/react`** (`useAgentChannel`), not the
+  `customer_site/hooks` re-exports. `RemoteComponentWrapper` and
+  `useRemoteParams` still come from `customer_site` (not in doover-js).
+  `doover-js`, `doover-js/react`, react, react-dom and `@tanstack/react-query`
+  are Module Federation singletons so the widget shares the host's client.
+- **Styling is Tailwind v4 + shadcn tokens.** `styles.css` maps the host site's
+  CSS variables into the Tailwind theme, so the widget follows site dark mode.
+- All tags for every app on a device live in the single `tag_values` aggregate,
+  keyed by app key — one subscription feeds all four panels.
