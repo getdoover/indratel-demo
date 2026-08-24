@@ -61,6 +61,10 @@ dashboard-widget/src/components/ui/                   # shadcn-style primitives
   at-a-glance summary, not a second copy of the device's raw IO or its static
   setup values — that feedback shaped the current layout, so resist adding
   channel dumps, "% of range" restatements or config echoes back in.
+- **Only the value carries a tone colour.** Tinting the small label and hint
+  text to match its tile made them unreadable against the wash; those stay on
+  `text-muted-foreground` / `text-foreground/75`. The pastel background plus a
+  coloured value is enough to read the state.
 - **Health bands belong to the source app, not to this one.** `signalBand`
   reads the ELPRO app's `weak_signal_threshold_dbm` out of `deployment_config`,
   and `batteryBand` scales off the charger's `charge_voltage_v` setpoint to tell

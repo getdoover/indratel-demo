@@ -41,18 +41,16 @@ const TONE_SURFACE: Record<Tone, string> = {
   neutral: "bg-muted/50 border-border",
 };
 
+/**
+ * Only the value carries the tone. Labels and hints stay on the host's own
+ * foreground tokens: small text tinted to match its tile is the first thing to
+ * become unreadable, and the wash plus the coloured value already say the state.
+ */
 const TONE_TEXT: Record<Tone, string> = {
   good: "text-emerald-700 dark:text-emerald-300",
-  fair: "text-amber-700 dark:text-amber-300",
+  fair: "text-amber-800 dark:text-amber-300",
   poor: "text-red-700 dark:text-red-300",
   neutral: "text-foreground",
-};
-
-const TONE_LABEL: Record<Tone, string> = {
-  good: "text-emerald-700/80 dark:text-emerald-300/80",
-  fair: "text-amber-700/80 dark:text-amber-300/80",
-  poor: "text-red-700/80 dark:text-red-300/80",
-  neutral: "text-muted-foreground",
 };
 
 function Metric({
@@ -72,19 +70,14 @@ function Metric({
 }) {
   return (
     <div className={cn("rounded-lg border px-3 py-2.5", TONE_SURFACE[tone])}>
-      <div
-        className={cn(
-          "flex items-center gap-1 text-[11px] uppercase tracking-wide",
-          TONE_LABEL[tone],
-        )}
-      >
+      <div className="text-muted-foreground flex items-center gap-1 text-[11px] uppercase tracking-wide">
         <Icon className="size-3" /> {label}
       </div>
       <div className="mt-1 flex items-baseline gap-1">
         <span className={cn("text-xl font-semibold tabular-nums", TONE_TEXT[tone])}>{value}</span>
-        {units && <span className={cn("text-xs", TONE_LABEL[tone])}>{units}</span>}
+        {units && <span className="text-muted-foreground text-xs">{units}</span>}
       </div>
-      {hint && <div className={cn("mt-0.5 text-[11px]", TONE_LABEL[tone])}>{hint}</div>}
+      {hint && <div className="text-foreground/75 mt-0.5 text-[11px]">{hint}</div>}
     </div>
   );
 }
