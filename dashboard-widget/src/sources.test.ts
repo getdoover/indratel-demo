@@ -1,13 +1,16 @@
 import {describe, expect, it} from "vitest";
 
 import {
+  batteryBand,
   buildConnection,
   buildDiagnostics,
   buildFlow,
   buildTank,
+  chargerBand,
   fraction,
+  radioBand,
   resolveAppKey,
-  supplyHealth,
+  signalBand,
 } from "./sources";
 
 /** Trimmed from the demo device's real `deployment_config` aggregate. */
@@ -52,22 +55,45 @@ const APPLICATIONS = {
     maximum_flow: 500,
     meter_mode: "Pulse",
   },
+  elpro_quantum_diagnostics_1: {
+    APPLICATION_NAME: "elpro_quantum_diagnostics",
+    APP_INSTALL_DISPLAY_NAME: "ELPRO Quantum Diagnostics",
+    DEVICE_TYPE: "Elpro Quantum",
+    weak_signal_threshold_dbm: -100,
+  },
 };
 
 const TAGS = {
   "4_20ma_sensor_1": {value: 3.15, raw_value: 4.5},
   "4_20ma_sensor_2": {value: 5.74, raw_value: 4.91},
   analog_flow_meter_1: {flow_rate: 0, totaliser: 0, sensor_fault_hidden: true},
+  // Trimmed from the demo unit's real ELPRO diagnostics tags.
+  elpro_quantum_diagnostics_1: {
+    active_source: "battery",
+    battery_current_a: -0.528,
+    battery_power_w: -6.31,
+    battery_voltage_v: 11.957,
+    charge_voltage_v: 13.8,
+    charger_charging: false,
+    charger_present: true,
+    charger_status: "Not charging",
+    pa_temperature_c: 33,
+    radio_alarm: false,
+    radio_driver_state: "AWAKE",
+    radio_initialised: true,
+    radio_present: true,
+    radio_uptime_s: 940374,
+    rssi_background_dbm: -117,
+    rssi_dbm: -119,
+    running_on_battery: true,
+    tx_frequency_mhz: 472.1,
+    tx_power_dbm: 20,
+    unit_firmware: "2.15.0.0",
+    unit_model: "QE-R-C4",
+  },
   platform: {
-    AI0: 4.5,
-    AI2: 0.0000529,
-    AO0: 4.5,
-    DI0: false,
-    DI2: true,
-    DI10: true,
-    DO0: false,
-    voltage: 11.957,
-    power_watts: -6.309,
+    voltage: 11.955,
+    power_watts: -6.582,
   },
 };
 
@@ -127,19 +153,81 @@ describe("buildFlow", () => {
 });
 
 describe("buildDiagnostics", () => {
-  const diagnostics = buildDiagnostics("platform", APPLICATIONS, TAGS);
+  const diagnostics = buildDiagnostics(
+    "elpro_quantum_diagnostics_1",
+    "platform",
+    APPLICATIONS,
+    TAGS,
+  );
 
   it("reads the device type off any app install", () => {
     expect(diagnostics.deviceType).toBe("Elpro Quantum");
   });
 
-  it("reads the supply rail and power draw", () => {
-    expect(diagnostics.voltage).toBe(11.957);
-    expect(diagnostics.powerWatts).toBe(-6.309);
+  it("prefers the ELPRO app's battery rail over the platform's plain voltage", () => {
+    expect(diagnostics.detailed).toBe(true);
+    expect(diagnostics.batteryVoltage).toBe(11.957);
+    expect(diagnostics.batteryCurrent).toBe(-0.528);
+    expect(diagnostics.runningOnBattery).toBe(true);
   });
 
-  it("reports nothing published when the namespace is empty", () => {
-    expect(buildDiagnostics("platform", APPLICATIONS, {}).reporting).toBe(false);
+  it("carries the charger setpoint and radio state through", () => {
+    expect(diagnostics.chargeVoltage).toBe(13.8);
+    expect(diagnostics.chargerStatus).toBe("Not charging");
+    expect(diagnostics.radioState).toBe("AWAKE");
+    expect(diagnostics.rssiDbm).toBe(-119);
+  });
+
+  it("takes the weak-signal threshold from the ELPRO app's own config", () => {
+    expect(diagnostics.weakSignalDbm).toBe(-100);
+  });
+
+  it("falls back to the platform interface when the ELPRO app is absent", () => {
+    const fallback = buildDiagnostics(undefined, "platform", {}, {platform: TAGS.platform});
+    expect(fallback.detailed).toBe(false);
+    expect(fallback.batteryVoltage).toBe(11.955);
+    expect(fallback.reporting).toBe(true);
+  });
+
+  it("reports nothing published when neither app has reported", () => {
+    expect(buildDiagnostics(undefined, "platform", APPLICATIONS, {}).reporting).toBe(false);
+  });
+});
+
+describe("health bands", () => {
+  const diagnostics = buildDiagnostics(
+    "elpro_quantum_diagnostics_1",
+    "platform",
+    APPLICATIONS,
+    TAGS,
+  );
+
+  it("bands the battery against the charger setpoint, not a fixed 12 V", () => {
+    expect(batteryBand(11.957, 13.8)).toBe("fair");
+    expect(batteryBand(11.2, 13.8)).toBe("poor");
+    expect(batteryBand(13.1, 13.8)).toBe("good");
+    // The same 11.957 V on a 24 V bank is nearly flat, not merely low.
+    expect(batteryBand(11.957, 27.6)).toBe("poor");
+    expect(batteryBand(25.5, 27.6)).toBe("good");
+  });
+
+  it("splits signal on the operator's own weak threshold", () => {
+    expect(signalBand(-119, -100)).toBe("poor");
+    expect(signalBand(-105, -100)).toBe("fair");
+    expect(signalBand(-80, -100)).toBe("good");
+    expect(signalBand(undefined, -100)).toBe("neutral");
+  });
+
+  it("flags a charger that isn't charging while the battery carries the unit", () => {
+    expect(chargerBand(diagnostics)).toBe("fair");
+    expect(chargerBand({...diagnostics, chargerCharging: true})).toBe("good");
+    expect(chargerBand({...diagnostics, chargerPresent: false})).toBe("neutral");
+  });
+
+  it("calls the radio bad only when it is fitted and unhappy", () => {
+    expect(radioBand(diagnostics)).toBe("good");
+    expect(radioBand({...diagnostics, radioAlarm: true})).toBe("poor");
+    expect(radioBand({...diagnostics, radioPresent: false})).toBe("neutral");
   });
 });
 
@@ -165,10 +253,4 @@ describe("scales", () => {
     expect(fraction(5, 10, 10)).toBe(0);
   });
 
-  it("bands the Elpro supply rail", () => {
-    expect(supplyHealth(9)).toBe("low");
-    expect(supplyHealth(11.96)).toBe("ok");
-    expect(supplyHealth(24)).toBe("ok");
-    expect(supplyHealth(31)).toBe("high");
-  });
 });

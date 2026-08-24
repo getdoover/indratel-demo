@@ -61,6 +61,10 @@ dashboard-widget/src/components/ui/                   # shadcn-style primitives
   at-a-glance summary, not a second copy of the device's raw IO or its static
   setup values — that feedback shaped the current layout, so resist adding
   channel dumps, "% of range" restatements or config echoes back in.
+- **Health bands belong to the source app, not to this one.** `signalBand`
+  reads the ELPRO app's `weak_signal_threshold_dbm` out of `deployment_config`,
+  and `batteryBand` scales off the charger's `charge_voltage_v` setpoint to tell
+  a 12 V bank from a 24 V one. Don't hard-code a second, disagreeing opinion.
 - **Keep aggregate-shaping logic in `sources.ts`**, not in components: it is the
   only part with real edge cases (missing apps, seconds-vs-milliseconds
   timestamps, numerically-ordered IO channels) and the only part under test.

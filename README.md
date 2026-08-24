@@ -14,7 +14,14 @@ agent page. All the data comes from apps already installed on the same device.
 |---|---|---|
 | Tank 1 / Tank 2 | `4_20ma_sensor` installs | `value`, `raw_value` |
 | Flow 1 / Flow 2 | `analog_flow_meter` installs (pulse mode) | `flow_rate`, `totaliser`, `flow_active`, `pulse_count`, `last_pulse_dt`, `event_*`, `last_event_summary` |
-| Elpro diagnostics | platform interface `platform` tag namespace + `doover_connection` | `voltage`, `power_watts`, `temperature_c`, `uptime_s`, `firmware_version` |
+| Elpro diagnostics | `elpro_quantum_diagnostics` install + `doover_connection` | `battery_voltage_v`, `battery_current_a`, `active_source`, `running_on_battery`, `charge_voltage_v`, `charger_*`, `rssi_last_dbm`/`rssi_dbm`, `rssi_background_dbm`, `radio_*`, `pa_temperature_c`, `unit_model`, `unit_firmware` |
+
+Each diagnostics tile is washed in a pastel tone for its own state — green
+healthy, amber worth a look, red acting up — so the unit's condition reads
+before any number does. The bands come from the source apps rather than being
+invented here: the signal split is the operator's own `weak_signal_threshold_dbm`
+on the ELPRO app, and the battery bands scale off the charger's voltage setpoint
+so a 24 V bank isn't judged against 12 V numbers.
 
 Units, ranges, k-factors and display names are **not** configured here — they are
 read from each source app's own entry in the device's `deployment_config`, so
@@ -38,7 +45,8 @@ panel, which already renders them.
 | `tank_2_app` | `4_20ma_sensor_2` | App install key of the second level sensor |
 | `flow_1_app` | `analog_flow_meter_1` | App install key of the first pulse flow meter |
 | `flow_2_app` | `analog_flow_meter_2` | App install key of the second pulse flow meter |
-| `platform_app` | `platform` | Tag namespace the platform interface publishes diagnostics under |
+| `elpro_app` | `elpro_quantum_diagnostics_1` | App install key of the ELPRO Quantum diagnostics app |
+| `platform_app` | `platform` | Platform interface tag namespace — fallback when the ELPRO app isn't installed |
 | `show_diagnostics` | `true` | Show the Elpro diagnostics panel |
 
 If a configured key isn't present in `deployment_config`, the widget falls back
@@ -86,7 +94,7 @@ doover app publish
 | `dashboard-widget/src/sources.ts` | Tested helpers that turn aggregates into panel props |
 | `dashboard-widget/src/TankPanel.tsx` | Animated tank fill graphic |
 | `dashboard-widget/src/FlowPanel.tsx` | Arc gauge, totaliser, pulse count, event summary |
-| `dashboard-widget/src/DiagnosticsPanel.tsx` | Elpro supply/power/temp/uptime and link status |
+| `dashboard-widget/src/DiagnosticsPanel.tsx` | Battery, charger, radio and link status as pastel-toned tiles |
 | `dashboard-widget/src/components/ui/` | shadcn-style primitives (Card, Badge, Skeleton) |
 | `dashboard-widget/src/components/icons.tsx` | Local inline icons — no icon package |
 | `dashboard-widget/rsbuild.config.ts` | Module Federation and single-file bundle configuration |

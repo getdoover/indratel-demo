@@ -45,18 +45,28 @@ class IndratelDemoConfig(config.Schema):
         description="App install key of the second pulse flow meter.",
     )
 
+    elpro_app = config.String(
+        "Elpro App",
+        default="elpro_quantum_diagnostics_1",
+        description=(
+            "App install key of the ELPRO Quantum diagnostics app, which supplies "
+            "the battery, charger and radio readings. Without it the panel falls "
+            "back to the bare voltage the platform interface publishes."
+        ),
+    )
     platform_app = config.String(
         "Platform App",
         default="platform",
         description=(
-            "Tag namespace the platform interface publishes hardware diagnostics "
-            "under. This is the app's tag key ('platform'), not its install key."
+            "Tag namespace the platform interface publishes under. Used only as "
+            "a fallback when the ELPRO diagnostics app is not installed. This is "
+            "the app's tag key ('platform'), not its install key."
         ),
     )
     show_diagnostics = config.Boolean(
         "Show Diagnostics",
         default=True,
-        description="Show the Elpro hardware diagnostics panel.",
+        description="Show the hardware diagnostics panel.",
     )
 
 

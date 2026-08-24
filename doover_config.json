@@ -114,6 +114,19 @@
                     "default": "analog_flow_meter_2",
                     "x-position": 5
                 },
+                "elpro_app": {
+                    "title": "Elpro App",
+                    "x-name": "elpro_app",
+                    "x-hidden": false,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "App install key of the ELPRO Quantum diagnostics app, which supplies the battery, charger and radio readings. Without it the panel falls back to the bare voltage the platform interface publishes.",
+                    "default": "elpro_quantum_diagnostics_1",
+                    "x-position": 6
+                },
                 "platform_app": {
                     "title": "Platform App",
                     "x-name": "platform_app",
@@ -123,9 +136,9 @@
                         "null"
                     ],
                     "x-required": false,
-                    "description": "Tag namespace the platform interface publishes hardware diagnostics under. This is the app's tag key ('platform'), not its install key.",
+                    "description": "Tag namespace the platform interface publishes under. Used only as a fallback when the ELPRO diagnostics app is not installed. This is the app's tag key ('platform'), not its install key.",
                     "default": "platform",
-                    "x-position": 6
+                    "x-position": 7
                 },
                 "show_diagnostics": {
                     "title": "Show Diagnostics",
@@ -136,9 +149,9 @@
                         "null"
                     ],
                     "x-required": false,
-                    "description": "Show the Elpro hardware diagnostics panel.",
+                    "description": "Show the hardware diagnostics panel.",
                     "default": true,
-                    "x-position": 7
+                    "x-position": 8
                 }
             },
             "additionalElements": true,
@@ -172,6 +185,7 @@
                     "tank_2_app": "$config.app().tank_2_app",
                     "flow_1_app": "$config.app().flow_1_app",
                     "flow_2_app": "$config.app().flow_2_app",
+                    "elpro_app": "$config.app().elpro_app",
                     "platform_app": "$config.app().platform_app",
                     "show_diagnostics": "$config.app().show_diagnostics:boolean:true"
                 }

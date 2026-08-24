@@ -23,6 +23,7 @@ class IndratelDemoUI(ui.UI, default_open=True):
         tank_2_app="$config.app().tank_2_app",
         flow_1_app="$config.app().flow_1_app",
         flow_2_app="$config.app().flow_2_app",
+        elpro_app="$config.app().elpro_app",
         platform_app="$config.app().platform_app",
         show_diagnostics="$config.app().show_diagnostics:boolean:true",
     )

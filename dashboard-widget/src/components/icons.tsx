@@ -86,6 +86,30 @@ export function SignalIcon(props: IconProps) {
   );
 }
 
+export function BatteryIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect width="16" height="10" x="2" y="7" rx="2" />
+      <path d="M22 11v2" />
+      <path d="M6 11v2" />
+      <path d="M10 11v2" />
+    </Icon>
+  );
+}
+
+export function AntennaIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2 12 7 2" />
+      <path d="m7 12 5-10" />
+      <path d="m12 12 5-10" />
+      <path d="m17 12 5-10" />
+      <path d="M4.5 7h15" />
+      <path d="M12 16v6" />
+    </Icon>
+  );
+}
+
 export function BoltIcon(props: IconProps) {
   return (
     <Icon {...props}>

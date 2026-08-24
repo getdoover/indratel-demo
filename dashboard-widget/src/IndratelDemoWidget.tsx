@@ -28,6 +28,7 @@ interface IndratelDemoElement {
   tank_2_app?: string;
   flow_1_app?: string;
   flow_2_app?: string;
+  elpro_app?: string;
   platform_app?: string;
   show_diagnostics?: boolean;
 }
@@ -65,8 +66,8 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
   );
 
   const diagnostics = useMemo(
-    () => buildDiagnostics(uiElement.platform_app, applications, tags),
-    [uiElement.platform_app, applications, tags],
+    () => buildDiagnostics(uiElement.elpro_app, uiElement.platform_app, applications, tags),
+    [uiElement.elpro_app, uiElement.platform_app, applications, tags],
   );
 
   const connection = useMemo(
