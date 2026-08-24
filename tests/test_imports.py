@@ -33,8 +33,10 @@ def test_config_keys_match_ui_references():
     properties = set(config["config_schema"]["properties"])
     widget = config["ui_schema"]["children"]["IndratelDemoWidget"]
 
+    # References look like `$config.app().<key>` with an optional
+    # `:<type>:<default>` suffix.
     referenced = {
-        value.split(".")[-1].removeprefix("()")
+        value.removeprefix("$config.app().").split(":")[0]
         for value in widget.values()
         if isinstance(value, str) and value.startswith("$config.app().")
     }

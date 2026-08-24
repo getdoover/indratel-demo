@@ -5,20 +5,8 @@ import {Badge} from "./components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "./components/ui/card";
 import {Skeleton} from "./components/ui/skeleton";
 import {cn} from "./lib/utils";
-import {fmt, fraction, isNum} from "./lib/format";
-
-export interface TankSource {
-  /** App install key, e.g. `4_20ma_sensor_1`. */
-  appKey: string | null;
-  displayName: string;
-  /** The 4-20mA app's `value` tag, already scaled into engineering units. */
-  value: unknown;
-  units: string;
-  min: number;
-  max: number;
-  /** Raw loop current in mA — below ~3.5 mA the sensor is open-circuit. */
-  rawMilliamps: unknown;
-}
+import {fmt, isNum} from "./lib/format";
+import {fraction, type TankSource} from "./sources";
 
 type Level = {label: string; variant: "danger" | "warning" | "info" | "success"; fill: string};
 

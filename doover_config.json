@@ -71,7 +71,7 @@
                         "null"
                     ],
                     "x-required": false,
-                    "description": "App install key of the 4-20mA sensor measuring tank 1 (as it appears on the device).",
+                    "description": "App install key of the 4-20mA sensor measuring tank 1.",
                     "default": "4_20ma_sensor_1",
                     "x-position": 2
                 },
@@ -84,35 +84,61 @@
                         "null"
                     ],
                     "x-required": false,
-                    "description": "App install key of the 4-20mA sensor measuring tank 2 (as it appears on the device).",
+                    "description": "App install key of the 4-20mA sensor measuring tank 2.",
                     "default": "4_20ma_sensor_2",
                     "x-position": 3
                 },
-                "flow_meter_app": {
-                    "title": "Flow Meter App",
-                    "x-name": "flow_meter_app",
+                "flow_1_app": {
+                    "title": "Flow 1 App",
+                    "x-name": "flow_1_app",
                     "x-hidden": false,
                     "type": [
                         "string",
                         "null"
                     ],
                     "x-required": false,
-                    "description": "App install key of the analog flow meter.",
+                    "description": "App install key of the first pulse flow meter.",
                     "default": "analog_flow_meter_1",
                     "x-position": 4
                 },
-                "rain_gauge_app": {
-                    "title": "Rain Gauge App",
-                    "x-name": "rain_gauge_app",
+                "flow_2_app": {
+                    "title": "Flow 2 App",
+                    "x-name": "flow_2_app",
                     "x-hidden": false,
                     "type": [
                         "string",
                         "null"
                     ],
                     "x-required": false,
-                    "description": "App install key of the analog rain gauge. Leave as-is if not installed yet - the panel stays dormant until it reports.",
-                    "default": "analog_rain_gauge_1",
+                    "description": "App install key of the second pulse flow meter.",
+                    "default": "analog_flow_meter_2",
                     "x-position": 5
+                },
+                "platform_app": {
+                    "title": "Platform App",
+                    "x-name": "platform_app",
+                    "x-hidden": false,
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "Tag namespace the platform interface publishes hardware diagnostics under. This is the app's tag key ('platform'), not its install key.",
+                    "default": "platform",
+                    "x-position": 6
+                },
+                "show_diagnostics": {
+                    "title": "Show Diagnostics",
+                    "x-name": "show_diagnostics",
+                    "x-hidden": false,
+                    "type": [
+                        "boolean",
+                        "null"
+                    ],
+                    "x-required": false,
+                    "description": "Show the Elpro hardware diagnostics panel.",
+                    "default": true,
+                    "x-position": 7
                 }
             },
             "additionalElements": true,
@@ -144,8 +170,10 @@
                     "site_name": "$config.app().site_name",
                     "tank_1_app": "$config.app().tank_1_app",
                     "tank_2_app": "$config.app().tank_2_app",
-                    "flow_meter_app": "$config.app().flow_meter_app",
-                    "rain_gauge_app": "$config.app().rain_gauge_app"
+                    "flow_1_app": "$config.app().flow_1_app",
+                    "flow_2_app": "$config.app().flow_2_app",
+                    "platform_app": "$config.app().platform_app",
+                    "show_diagnostics": "$config.app().show_diagnostics:boolean:true"
                 }
             }
         }

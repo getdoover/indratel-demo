@@ -3,27 +3,8 @@ import {Activity, Gauge, TriangleAlert, Waves} from "lucide-react";
 import {Badge} from "./components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "./components/ui/card";
 import {Skeleton} from "./components/ui/skeleton";
-import {absTime, fmt, fmtInt, fraction, fromNow, isNum} from "./lib/format";
-
-export interface FlowSource {
-  appKey: string | null;
-  displayName: string;
-  flowRate: unknown;
-  totaliser: unknown;
-  flowActive: unknown;
-  eventStarted: unknown;
-  eventVolume: unknown;
-  eventPeakFlow: unknown;
-  lastEventSummary: unknown;
-  /** The app publishes `sensor_fault_hidden` — true means healthy. */
-  sensorFaultHidden: unknown;
-  /** e.g. "L" */
-  volumeUnits: string;
-  /** e.g. "L/hr" */
-  rateUnits: string;
-  maxFlow: number;
-  ratePrecision: number;
-}
+import {absTime, fmt, fmtInt, fromNow, isNum} from "./lib/format";
+import {fraction, type FlowSource} from "./sources";
 
 const ARC_START = -220;
 const ARC_SWEEP = 260;
@@ -44,7 +25,7 @@ function arcPath(fromFrac: number, toFrac: number, radius: number) {
   return `M ${p0.x} ${p0.y} A ${radius} ${radius} 0 ${largeArc} 1 ${p1.x} ${p1.y}`;
 }
 
-/** Open-ended arc gauge: track, value sweep, and a needle-free end cap. */
+/** Open-ended arc gauge: a muted track with the value swept over it. */
 function FlowGauge({fraction: frac, active}: {fraction: number; active: boolean}) {
   const colour = active ? "#0ea5e9" : "#94a3b8";
   return (
@@ -63,7 +44,6 @@ function FlowGauge({fraction: frac, active}: {fraction: number; active: boolean}
           stroke={colour}
           strokeWidth="12"
           strokeLinecap="round"
-          style={{transition: "d 700ms ease-out"}}
         />
       )}
       {/* Quarter ticks give the sweep a sense of scale. */}
@@ -101,7 +81,10 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
     );
   }
 
-  const faulted = flow.sensorFaultHidden === false;
+  const isPulse = flow.meterMode === "Pulse";
+  // A pulse meter has no analog signal to fall out of range, so the app's
+  // signal-fault flag only means anything in analog mode.
+  const faulted = !isPulse && flow.sensorFaultHidden === false;
   const hasRate = isNum(flow.flowRate);
   const rate = hasRate ? (flow.flowRate as number) : 0;
   const active = flow.flowActive === true || rate > 0;
@@ -113,6 +96,7 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
         <div className="min-w-0">
           <CardTitle className="truncate">{flow.displayName}</CardTitle>
           <div className="text-muted-foreground mt-1 text-xs">
+            {isPulse ? `Pulse · ${fmt(flow.kFactor, 0)}/${flow.volumeUnits}` : "Analog 4-20mA"} ·
             0–{flow.maxFlow.toLocaleString()} {flow.rateUnits}
           </div>
         </div>
@@ -155,6 +139,12 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
               {fmtInt(flow.totaliser)}{" "}
               <span className="text-muted-foreground text-sm font-normal">{flow.volumeUnits}</span>
             </dd>
+            {isPulse && isNum(flow.pulseCount) && (
+              <dd className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
+                {fmtInt(flow.pulseCount)} pulses counted
+                {isNum(flow.lastPulseAt) && <> · last {fromNow(flow.lastPulseAt)}</>}
+              </dd>
+            )}
           </div>
 
           <div>

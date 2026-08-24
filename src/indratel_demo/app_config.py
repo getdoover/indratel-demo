@@ -7,9 +7,13 @@ from pydoover.processor import SubscriptionConfig
 class IndratelDemoConfig(config.Schema):
     """Configuration for the Indratel demo dashboard.
 
-    Every panel of the widget is driven by another app installed on the same
-    device. We only need to know which app key to read each one from - all the
-    units, ranges and display names come from that app's own deployment config.
+    Every panel is driven by another app installed on the same device, so all
+    we need here is which app key to read each one from. Units, ranges and
+    display names come from that app's own entry in `deployment_config`.
+
+    Note: a config element's key is derived from its *display name*, not the
+    attribute name. Keep the two identical or `$config.app().<key>` lookups in
+    `app_ui.py` resolve to nothing.
     """
 
     subscription = SubscriptionConfig(default="deployment_config")
@@ -23,22 +27,36 @@ class IndratelDemoConfig(config.Schema):
     tank_1_app = config.String(
         "Tank 1 App",
         default="4_20ma_sensor_1",
-        description="App install key of the 4-20mA sensor measuring tank 1 (as it appears on the device).",
+        description="App install key of the 4-20mA sensor measuring tank 1.",
     )
     tank_2_app = config.String(
         "Tank 2 App",
         default="4_20ma_sensor_2",
-        description="App install key of the 4-20mA sensor measuring tank 2 (as it appears on the device).",
+        description="App install key of the 4-20mA sensor measuring tank 2.",
     )
-    flow_meter_app = config.String(
-        "Flow Meter App",
+    flow_1_app = config.String(
+        "Flow 1 App",
         default="analog_flow_meter_1",
-        description="App install key of the analog flow meter.",
+        description="App install key of the first pulse flow meter.",
     )
-    rain_gauge_app = config.String(
-        "Rain Gauge App",
-        default="analog_rain_gauge_1",
-        description="App install key of the analog rain gauge. Leave as-is if not installed yet - the panel stays dormant until it reports.",
+    flow_2_app = config.String(
+        "Flow 2 App",
+        default="analog_flow_meter_2",
+        description="App install key of the second pulse flow meter.",
+    )
+
+    platform_app = config.String(
+        "Platform App",
+        default="platform",
+        description=(
+            "Tag namespace the platform interface publishes hardware diagnostics "
+            "under. This is the app's tag key ('platform'), not its install key."
+        ),
+    )
+    show_diagnostics = config.Boolean(
+        "Show Diagnostics",
+        default=True,
+        description="Show the Elpro hardware diagnostics panel.",
     )
 
 

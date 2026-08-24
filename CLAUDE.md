@@ -12,6 +12,8 @@ uv run export-config                     # -> doover_config.json config_schema
 uv run export-ui                         # -> doover_config.json ui_schema
 uv run pytest tests -v
 npm --prefix dashboard-widget install
+npm --prefix dashboard-widget test       # vitest over src/sources.ts
+npm --prefix dashboard-widget run check  # tsc --noEmit
 npm --prefix dashboard-widget run build  # -> dashboard-widget/assets/IndratelDemoWidget.js
 doover app publish                       # exports both schemas, builds + uploads the widget
 ```
@@ -20,8 +22,10 @@ doover app publish                       # exports both schemas, builds + upload
 
 ```
 src/indratel_demo/{__init__,application,app_config,app_ui}.py
-dashboard-widget/src/{IndratelDemoWidget,TankPanel,FlowPanel,RainPanel}.tsx
-dashboard-widget/src/components/ui/   # shadcn-style primitives
+dashboard-widget/src/IndratelDemoWidget.tsx           # subscriptions + layout
+dashboard-widget/src/sources.ts                       # pure, tested aggregate -> props
+dashboard-widget/src/{Tank,Flow,Diagnostics}Panel.tsx
+dashboard-widget/src/components/ui/                   # shadcn-style primitives
 ```
 
 ## Conventions that matter here
@@ -40,4 +44,13 @@ dashboard-widget/src/components/ui/   # shadcn-style primitives
 - **Styling is Tailwind v4 + shadcn tokens.** `styles.css` maps the host site's
   CSS variables into the Tailwind theme, so the widget follows site dark mode.
 - All tags for every app on a device live in the single `tag_values` aggregate,
-  keyed by app key — one subscription feeds all four panels.
+  keyed by app key — one subscription feeds every panel. The platform interface
+  publishes hardware diagnostics under the key `platform`, not its install key
+  `platform_interface_1`.
+- **Keep aggregate-shaping logic in `sources.ts`**, not in components: it is the
+  only part with real edge cases (missing apps, seconds-vs-milliseconds
+  timestamps, numerically-ordered IO channels) and the only part under test.
+- Follow the shape of the official examples in `~/Coding/doover/examples`
+  (`examples/device-widget-tag-values`): explicit no-agent / loading / error
+  states, `globals.d.ts` for the `customer_site/*` remotes, `npm run check`, and
+  a README project-map table.
