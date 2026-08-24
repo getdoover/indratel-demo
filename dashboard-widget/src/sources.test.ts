@@ -19,6 +19,7 @@ const APPLICATIONS = {
     measurement_units: "%",
     min_range: 0,
     max_range: 100,
+    ai_pin_number: 0,
   },
   "4_20ma_sensor_2": {
     APPLICATION_NAME: "4_20ma_sensor",
@@ -27,6 +28,7 @@ const APPLICATIONS = {
     measurement_units: "%",
     min_range: 0,
     max_range: 100,
+    ai_pin_number: 1,
   },
   analog_flow_meter_1: {
     APPLICATION_NAME: "analog_flow_meter",
@@ -135,10 +137,12 @@ describe("buildDiagnostics", () => {
     expect(diagnostics.digitalInputs.map((c) => c.label)).toEqual(["DI0", "DI2", "DI10"]);
   });
 
-  it("infers analog units from the reading", () => {
+  it("labels only the analog channels an app claims as a current loop", () => {
+    // 4_20ma_sensor_1 sits on ai_pin_number 0; nothing owns AI2, and a
+    // disconnected loop reading 0 must not be guessed at as volts.
     expect(diagnostics.analogInputs).toEqual([
       {label: "AI0", value: 4.5, units: "mA"},
-      {label: "AI2", value: 0.0000529, units: "V"},
+      {label: "AI2", value: 0.0000529, units: ""},
     ]);
   });
 

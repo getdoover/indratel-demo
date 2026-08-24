@@ -1,5 +1,5 @@
 import {useId} from "react";
-import {Droplets, TriangleAlert} from "lucide-react";
+import {DropletsIcon, WarningIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "./components/ui/card";
@@ -160,7 +160,7 @@ export function TankPanel({tank}: {tank: TankSource}) {
         </div>
         {faulted ? (
           <Badge variant="danger">
-            <TriangleAlert className="size-3" /> Sensor fault
+            <WarningIcon className="size-3" /> Sensor fault
           </Badge>
         ) : hasValue ? (
           <Badge variant={level.variant}>{level.label}</Badge>
@@ -187,7 +187,7 @@ export function TankPanel({tank}: {tank: TankSource}) {
           )}
 
           <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-            <Droplets className="size-3.5" />
+            <DropletsIcon className="size-3.5" />
             {hasValue ? `${Math.round(pct * 100)}% of range` : "Waiting for a reading"}
           </div>
 

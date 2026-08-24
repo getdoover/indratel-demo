@@ -83,8 +83,18 @@ doover app publish
 | `dashboard-widget/src/FlowPanel.tsx` | Arc gauge, totaliser, pulse count, event summary |
 | `dashboard-widget/src/DiagnosticsPanel.tsx` | Elpro supply/power/temp/uptime and IO state |
 | `dashboard-widget/src/components/ui/` | shadcn-style primitives (Card, Badge, Skeleton) |
+| `dashboard-widget/src/components/icons.tsx` | Local inline icons — no icon package |
 | `dashboard-widget/rsbuild.config.ts` | Module Federation and single-file bundle configuration |
 | `doover_config.json` | App metadata and generated schemas |
+
+## Dependencies
+
+React and nothing else at runtime. The widget is concatenated into a single
+module-federated file that the host loads; an earlier build that pulled in
+`lucide-react`, `dayjs` and `class-variance-authority` failed to initialise in
+the host and rendered as "Remote component has failed to load". Icons, relative
+time and the class-name helpers are local. Check a real agent page after any
+dependency change.
 
 ## Adapting it
 

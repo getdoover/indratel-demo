@@ -1,4 +1,4 @@
-import {Activity, Gauge, TriangleAlert, Waves} from "lucide-react";
+import {ActivityIcon, GaugeIcon, WarningIcon, WavesIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "./components/ui/card";
@@ -102,11 +102,11 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
         </div>
         {faulted ? (
           <Badge variant="danger">
-            <TriangleAlert className="size-3" /> Signal fault
+            <WarningIcon className="size-3" /> Signal fault
           </Badge>
         ) : active ? (
           <Badge variant="info">
-            <Waves className="size-3" /> Flowing
+            <WavesIcon className="size-3" /> Flowing
           </Badge>
         ) : (
           <Badge variant="muted">Idle</Badge>
@@ -133,7 +133,7 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
         <dl className="min-w-[9rem] flex-1 space-y-3">
           <div>
             <dt className="text-muted-foreground flex items-center gap-1 text-xs">
-              <Gauge className="size-3.5" /> Totaliser
+              <GaugeIcon className="size-3.5" /> Totaliser
             </dt>
             <dd className="text-xl font-semibold tabular-nums">
               {fmtInt(flow.totaliser)}{" "}
@@ -149,7 +149,7 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
 
           <div>
             <dt className="text-muted-foreground flex items-center gap-1 text-xs">
-              <Activity className="size-3.5" /> {active ? "This event" : "Last event"}
+              <ActivityIcon className="size-3.5" /> {active ? "This event" : "Last event"}
             </dt>
             <dd className="text-sm">
               {active ? (

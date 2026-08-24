@@ -3,13 +3,13 @@ import {useMemo} from "react";
 import RemoteComponentWrapper from "customer_site/RemoteComponentWrapper";
 import {useRemoteParams} from "customer_site/useRemoteParams";
 import {useAgentChannel} from "doover-js/react";
-import {RadioTower} from "lucide-react";
+import {RadioTowerIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
 import {DiagnosticsPanel} from "./DiagnosticsPanel";
 import {FlowPanel} from "./FlowPanel";
 import {TankPanel} from "./TankPanel";
-import {absTime, dayjs, fromNow, isNum} from "./lib/format";
+import {absTime, fromNow, isNum, secondsSince} from "./lib/format";
 import {
   buildConnection,
   buildDiagnostics,
@@ -75,9 +75,8 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
   );
 
   const lastUpdated = tagsQuery.last_updated;
-  const stale = isNum(lastUpdated)
-    ? dayjs().diff(dayjs(lastUpdated), "second") > STALE_AFTER_SECONDS
-    : true;
+  const age = secondsSince(lastUpdated);
+  const stale = age == null || age > STALE_AFTER_SECONDS;
 
   if (!agentId) {
     return (
@@ -111,7 +110,7 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
           variant={stale ? "muted" : "success"}
           title={lastUpdated ? absTime(lastUpdated) : undefined}
         >
-          <RadioTower className="size-3" />
+          <RadioTowerIcon className="size-3" />
           {lastUpdated ? `updated ${fromNow(lastUpdated)}` : "waiting for data"}
         </Badge>
       </header>

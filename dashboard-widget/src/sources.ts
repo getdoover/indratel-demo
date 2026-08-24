@@ -181,7 +181,7 @@ export interface IoChannel {
 export interface AnalogChannel {
   label: string;
   value: number;
-  /** Elpro channels are either 0-10 V or 4-20 mA; inferred from the reading. */
+  /** Empty unless an app on the device tells us what is wired to the channel. */
   units: string;
 }
 
@@ -231,17 +231,38 @@ function digitalChannels(tags: TagBag, prefix: string): IoChannel[] {
 }
 
 /**
- * A 4-20mA loop never reads below ~3 and a 0-10V input rarely sits above it, so
- * the reading itself is the only unit hint available — the platform interface
- * publishes bare numbers. Anything at or under 3 is treated as volts.
+ * Which analog input channels are 4-20mA loops, according to the apps wired to
+ * them.
+ *
+ * The platform interface publishes bare numbers with no units, and the reading
+ * alone can't tell you: a disconnected 4-20mA loop reads 0, which is
+ * indistinguishable from 0 V. Only the app that owns the pin knows, so ask it.
  */
-function analogChannels(tags: TagBag, prefix: string): AnalogChannel[] {
+export function currentLoopPins(applications: Applications): Set<number> {
+  const pins = new Set<number>();
+  for (const cfg of Object.values(applications)) {
+    if (cfg?.APPLICATION_NAME === "4_20ma_sensor" && isNum(cfg.ai_pin_number)) {
+      pins.add(cfg.ai_pin_number);
+    }
+    // Pulse-mode meters read a digital input; only analog mode claims an AI.
+    if (
+      cfg?.APPLICATION_NAME === "analog_flow_meter" &&
+      cfg.meter_mode === "Analog" &&
+      isNum(cfg.analog_input_pin)
+    ) {
+      pins.add(cfg.analog_input_pin);
+    }
+  }
+  return pins;
+}
+
+function analogChannels(tags: TagBag, prefix: string, milliampPins: Set<number>): AnalogChannel[] {
   return collectIndexed(tags, prefix)
     .filter((entry) => isNum(entry.value))
     .map((entry) => ({
       label: `${prefix}${entry.index}`,
       value: entry.value as number,
-      units: (entry.value as number) > 3 ? "mA" : "V",
+      units: milliampPins.has(entry.index) ? "mA" : "",
     }));
 }
 
@@ -271,8 +292,9 @@ export function buildDiagnostics(
     firmwareVersion: tag.firmware_version,
     digitalInputs: digitalChannels(tag, "DI"),
     digitalOutputs: digitalChannels(tag, "DO"),
-    analogInputs: analogChannels(tag, "AI"),
-    analogOutputs: analogChannels(tag, "AO"),
+    analogInputs: analogChannels(tag, "AI", currentLoopPins(applications)),
+    // Nothing on the device declares what an output drives, so leave it bare.
+    analogOutputs: analogChannels(tag, "AO", new Set()),
   };
 }
 

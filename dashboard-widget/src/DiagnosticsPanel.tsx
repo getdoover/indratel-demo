@@ -1,4 +1,4 @@
-import {Cpu, Plug, Signal, Thermometer, Timer, Zap} from "lucide-react";
+import {BoltIcon, ChipIcon, PlugIcon, SignalIcon, ThermometerIcon, TimerIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
 import {Card, CardContent, CardHeader, CardTitle} from "./components/ui/card";
@@ -14,7 +14,7 @@ function Metric({
   hint,
   tone,
 }: {
-  icon: typeof Zap;
+  icon: (props: {className?: string}) => JSX.Element;
   label: string;
   value: string;
   units?: string;
@@ -87,7 +87,7 @@ function AnalogRow({title, channels}: {title: string; channels: AnalogChannel[]}
           >
             <span className="text-muted-foreground">{channel.label}</span>
             <span className="tabular-nums">{fmt(channel.value, 2)}</span>
-            <span className="text-muted-foreground">{channel.units}</span>
+            {channel.units && <span className="text-muted-foreground">{channel.units}</span>}
           </span>
         ))}
       </div>
@@ -120,7 +120,7 @@ export function DiagnosticsPanel({
           variant={online ? "success" : "danger"}
           title={connection.lastOnline ? absTime(connection.lastOnline) : undefined}
         >
-          <Signal className="size-3" />
+          <SignalIcon className="size-3" />
           {online
             ? isNum(connection.latencyMs)
               ? `Online · ${Math.round(connection.latencyMs as number)} ms`
@@ -137,7 +137,7 @@ export function DiagnosticsPanel({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Metric
-              icon={Zap}
+              icon={BoltIcon}
               label="Supply"
               value={fmt(diagnostics.voltage, 2)}
               units="V"
@@ -145,7 +145,7 @@ export function DiagnosticsPanel({
               hint={health === "low" ? "below 10.5 V" : health === "high" ? "above 30 V" : undefined}
             />
             <Metric
-              icon={Plug}
+              icon={PlugIcon}
               label="Power"
               // The platform interface reports negative watts while the unit is
               // charging its battery rather than drawing down.
@@ -157,17 +157,23 @@ export function DiagnosticsPanel({
                   : undefined
               }
             />
-            <Metric
-              icon={Thermometer}
-              label="Temp"
-              value={fmt(diagnostics.temperatureC, 1)}
-              units="°C"
-            />
-            <Metric
-              icon={Timer}
-              label="Uptime"
-              value={fmtDuration(diagnostics.uptimeSeconds)}
-            />
+            {/* Not every platform build publishes these; an empty tile reads as
+                a fault, so drop them rather than showing a dash. */}
+            {isNum(diagnostics.temperatureC) && (
+              <Metric
+                icon={ThermometerIcon}
+                label="Temp"
+                value={fmt(diagnostics.temperatureC, 1)}
+                units="°C"
+              />
+            )}
+            {isNum(diagnostics.uptimeSeconds) && (
+              <Metric
+                icon={TimerIcon}
+                label="Uptime"
+                value={fmtDuration(diagnostics.uptimeSeconds)}
+              />
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -179,7 +185,7 @@ export function DiagnosticsPanel({
 
           {connection.userAgent && (
             <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
-              <Cpu className="size-3" /> {connection.userAgent}
+              <ChipIcon className="size-3" /> {connection.userAgent}
             </div>
           )}
         </CardContent>

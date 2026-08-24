@@ -41,8 +41,18 @@ dashboard-widget/src/components/ui/                   # shadcn-style primitives
   `useRemoteParams` still come from `customer_site` (not in doover-js).
   `doover-js`, `doover-js/react`, react, react-dom and `@tanstack/react-query`
   are Module Federation singletons so the widget shares the host's client.
-- **Styling is Tailwind v4 + shadcn tokens.** `styles.css` maps the host site's
-  CSS variables into the Tailwind theme, so the widget follows site dark mode.
+- **Styling is Tailwind v4 + shadcn-shaped primitives written locally.**
+  `styles.css` maps the host site's CSS variables into the Tailwind theme, so
+  the widget follows site dark mode.
+- **Keep the runtime dependency list to React alone.** The widget ships as one
+  concatenated module-federated file; an earlier build with `lucide-react`,
+  `dayjs` and `class-variance-authority` failed to initialise in the host with
+  `Cannot access 'tA' before initialization` and rendered as "Remote component
+  has failed to load". Icons, relative-time formatting and the `cn`/variant
+  helpers are all local (`components/icons.tsx`, `lib/format.ts`,
+  `lib/utils.ts`) — the same dependency footprint as the working
+  `device_io_tester` widget. Adding a package here is a deployment risk, so
+  verify on a real agent page after any dependency change.
 - All tags for every app on a device live in the single `tag_values` aggregate,
   keyed by app key — one subscription feeds every panel. The platform interface
   publishes hardware diagnostics under the key `platform`, not its install key
