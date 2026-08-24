@@ -133,17 +133,9 @@ describe("buildDiagnostics", () => {
     expect(diagnostics.deviceType).toBe("Elpro Quantum");
   });
 
-  it("orders IO channels numerically, not lexically", () => {
-    expect(diagnostics.digitalInputs.map((c) => c.label)).toEqual(["DI0", "DI2", "DI10"]);
-  });
-
-  it("labels only the analog channels an app claims as a current loop", () => {
-    // 4_20ma_sensor_1 sits on ai_pin_number 0; nothing owns AI2, and a
-    // disconnected loop reading 0 must not be guessed at as volts.
-    expect(diagnostics.analogInputs).toEqual([
-      {label: "AI0", value: 4.5, units: "mA"},
-      {label: "AI2", value: 0.0000529, units: ""},
-    ]);
+  it("reads the supply rail and power draw", () => {
+    expect(diagnostics.voltage).toBe(11.957);
+    expect(diagnostics.powerWatts).toBe(-6.309);
   });
 
   it("reports nothing published when the namespace is empty", () => {
@@ -156,7 +148,7 @@ describe("buildConnection", () => {
     expect(
       buildConnection({
         determination: "Online",
-        status: {status: "ContinuousOnline", latency_ms: 17, ip: "10.4.16.119:3390"},
+        status: {status: "ContinuousOnline", latency_ms: 17},
       }),
     ).toMatchObject({determination: "Online", status: "ContinuousOnline", latencyMs: 17});
   });

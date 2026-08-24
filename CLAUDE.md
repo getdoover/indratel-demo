@@ -57,6 +57,10 @@ dashboard-widget/src/components/ui/                   # shadcn-style primitives
   keyed by app key — one subscription feeds every panel. The platform interface
   publishes hardware diagnostics under the key `platform`, not its install key
   `platform_interface_1`.
+- **Show nothing the rest of the agent page already shows.** The panels are an
+  at-a-glance summary, not a second copy of the device's raw IO or its static
+  setup values — that feedback shaped the current layout, so resist adding
+  channel dumps, "% of range" restatements or config echoes back in.
 - **Keep aggregate-shaping logic in `sources.ts`**, not in components: it is the
   only part with real edge cases (missing apps, seconds-vs-milliseconds
   timestamps, numerically-ordered IO channels) and the only part under test.

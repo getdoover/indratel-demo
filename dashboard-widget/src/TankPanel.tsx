@@ -186,10 +186,12 @@ export function TankPanel({tank}: {tank: TankSource}) {
             <Skeleton className="h-10 w-24" />
           )}
 
-          <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-            <DropletsIcon className="size-3.5" />
-            {hasValue ? `${Math.round(pct * 100)}% of range` : "Waiting for a reading"}
-          </div>
+          {!hasValue && (
+            <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+              <DropletsIcon className="size-3.5" />
+              Waiting for a reading
+            </div>
+          )}
 
           {/* Compact bar mirrors the tank for small screens where the graphic
               is squeezed. */}

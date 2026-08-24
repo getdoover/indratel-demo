@@ -14,15 +14,20 @@ agent page. All the data comes from apps already installed on the same device.
 |---|---|---|
 | Tank 1 / Tank 2 | `4_20ma_sensor` installs | `value`, `raw_value` |
 | Flow 1 / Flow 2 | `analog_flow_meter` installs (pulse mode) | `flow_rate`, `totaliser`, `flow_active`, `pulse_count`, `last_pulse_dt`, `event_*`, `last_event_summary` |
-| Elpro diagnostics | platform interface `platform` tag namespace + `doover_connection` | `voltage`, `power_watts`, `temperature_c`, `uptime_s`, `firmware_version`, `DI<n>`, `DO<n>`, `AI<n>`, `AO<n>` |
+| Elpro diagnostics | platform interface `platform` tag namespace + `doover_connection` | `voltage`, `power_watts`, `temperature_c`, `uptime_s`, `firmware_version` |
 
 Units, ranges, k-factors and display names are **not** configured here — they are
 read from each source app's own entry in the device's `deployment_config`, so
 changing a tank's `max_range` or a meter's `flow_units` updates the dashboard
 with no redeploy.
 
-The widget is read-only. Controls (reset totaliser, alarm points, digital output
-toggles) stay on each source app's own panel, which already renders them.
+The widget is read-only, and deliberately shows nothing the rest of the page
+already shows. No raw DI/DO/AI/AO channel readout (the Device IO Tester app
+renders all of those with more context), no restatement of a reading as a
+percentage of its own range, and no setup detail — k-factors, full-scale ranges,
+IP address, agent build string — that doesn't change between glances. Controls
+(reset totaliser, alarm points, output toggles) stay on each source app's own
+panel, which already renders them.
 
 ## Configuration
 
@@ -81,7 +86,7 @@ doover app publish
 | `dashboard-widget/src/sources.ts` | Tested helpers that turn aggregates into panel props |
 | `dashboard-widget/src/TankPanel.tsx` | Animated tank fill graphic |
 | `dashboard-widget/src/FlowPanel.tsx` | Arc gauge, totaliser, pulse count, event summary |
-| `dashboard-widget/src/DiagnosticsPanel.tsx` | Elpro supply/power/temp/uptime and IO state |
+| `dashboard-widget/src/DiagnosticsPanel.tsx` | Elpro supply/power/temp/uptime and link status |
 | `dashboard-widget/src/components/ui/` | shadcn-style primitives (Card, Badge, Skeleton) |
 | `dashboard-widget/src/components/icons.tsx` | Local inline icons — no icon package |
 | `dashboard-widget/rsbuild.config.ts` | Module Federation and single-file bundle configuration |

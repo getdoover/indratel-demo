@@ -173,18 +173,6 @@ export function buildFlow(
 // Elpro hardware diagnostics
 // ---------------------------------------------------------------------------
 
-export interface IoChannel {
-  label: string;
-  state: boolean;
-}
-
-export interface AnalogChannel {
-  label: string;
-  value: number;
-  /** Empty unless an app on the device tells us what is wired to the channel. */
-  units: string;
-}
-
 export interface DiagnosticsSource {
   /** The tag namespace the platform interface publishes under. */
   tagKey: string;
@@ -195,10 +183,6 @@ export interface DiagnosticsSource {
   temperatureC: unknown;
   uptimeSeconds: unknown;
   firmwareVersion: unknown;
-  digitalInputs: IoChannel[];
-  digitalOutputs: IoChannel[];
-  analogInputs: AnalogChannel[];
-  analogOutputs: AnalogChannel[];
 }
 
 export interface ConnectionSource {
@@ -206,64 +190,6 @@ export interface ConnectionSource {
   status: string | null;
   latencyMs: unknown;
   lastOnline: unknown;
-  ip: string | null;
-  userAgent: string | null;
-}
-
-/**
- * Collect `PREFIX<n>` tags into an ordered list. The platform interface names
- * its IO tags positionally (DI0, DO3, AI5), including slave channels in the same
- * flat namespace, so sorting numerically keeps a 10-channel unit in board order.
- */
-function collectIndexed(tags: TagBag, prefix: string): Array<{index: number; value: unknown}> {
-  const pattern = new RegExp(`^${prefix}(\\d+)$`);
-  return Object.keys(tags)
-    .map((key) => ({key, match: pattern.exec(key)}))
-    .filter((entry): entry is {key: string; match: RegExpExecArray} => entry.match !== null)
-    .map((entry) => ({index: Number(entry.match[1]), value: tags[entry.key]}))
-    .sort((a, b) => a.index - b.index);
-}
-
-function digitalChannels(tags: TagBag, prefix: string): IoChannel[] {
-  return collectIndexed(tags, prefix)
-    .filter((entry) => typeof entry.value === "boolean")
-    .map((entry) => ({label: `${prefix}${entry.index}`, state: entry.value === true}));
-}
-
-/**
- * Which analog input channels are 4-20mA loops, according to the apps wired to
- * them.
- *
- * The platform interface publishes bare numbers with no units, and the reading
- * alone can't tell you: a disconnected 4-20mA loop reads 0, which is
- * indistinguishable from 0 V. Only the app that owns the pin knows, so ask it.
- */
-export function currentLoopPins(applications: Applications): Set<number> {
-  const pins = new Set<number>();
-  for (const cfg of Object.values(applications)) {
-    if (cfg?.APPLICATION_NAME === "4_20ma_sensor" && isNum(cfg.ai_pin_number)) {
-      pins.add(cfg.ai_pin_number);
-    }
-    // Pulse-mode meters read a digital input; only analog mode claims an AI.
-    if (
-      cfg?.APPLICATION_NAME === "analog_flow_meter" &&
-      cfg.meter_mode === "Analog" &&
-      isNum(cfg.analog_input_pin)
-    ) {
-      pins.add(cfg.analog_input_pin);
-    }
-  }
-  return pins;
-}
-
-function analogChannels(tags: TagBag, prefix: string, milliampPins: Set<number>): AnalogChannel[] {
-  return collectIndexed(tags, prefix)
-    .filter((entry) => isNum(entry.value))
-    .map((entry) => ({
-      label: `${prefix}${entry.index}`,
-      value: entry.value as number,
-      units: milliampPins.has(entry.index) ? "mA" : "",
-    }));
 }
 
 export function buildDiagnostics(
@@ -290,11 +216,6 @@ export function buildDiagnostics(
     temperatureC: tag.temperature_c,
     uptimeSeconds: tag.uptime_s,
     firmwareVersion: tag.firmware_version,
-    digitalInputs: digitalChannels(tag, "DI"),
-    digitalOutputs: digitalChannels(tag, "DO"),
-    analogInputs: analogChannels(tag, "AI", currentLoopPins(applications)),
-    // Nothing on the device declares what an output drives, so leave it bare.
-    analogOutputs: analogChannels(tag, "AO", new Set()),
   };
 }
 
@@ -305,8 +226,6 @@ export function buildConnection(connection: Record<string, any> | undefined): Co
     status: typeof status.status === "string" ? status.status : null,
     latencyMs: status.latency_ms,
     lastOnline: status.last_online,
-    ip: typeof status.ip === "string" ? status.ip : null,
-    userAgent: typeof status.user_agent === "string" ? status.user_agent : null,
   };
 }
 

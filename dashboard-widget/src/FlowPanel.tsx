@@ -96,8 +96,7 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
         <div className="min-w-0">
           <CardTitle className="truncate">{flow.displayName}</CardTitle>
           <div className="text-muted-foreground mt-1 text-xs">
-            {isPulse ? `Pulse · ${fmt(flow.kFactor, 0)}/${flow.volumeUnits}` : "Analog 4-20mA"} ·
-            0–{flow.maxFlow.toLocaleString()} {flow.rateUnits}
+            {isPulse ? "Pulse meter" : "Analog 4-20mA"}
           </div>
         </div>
         {faulted ? (
