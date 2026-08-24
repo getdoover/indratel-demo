@@ -5,7 +5,7 @@
         "type": "PRO",
         "visibility": "PUB",
         "allow_many": false,
-        "description": "Polished site-overview dashboard for the Indratel demo device - live tank levels, flow and rainfall in one panel.",
+        "description": "Site overview for the Indratel demo device - tank levels, pulse flow meters and Elpro diagnostics in one panel.",
         "long_description": "README.md",
         "depends_on": [],
         "handler": "src.indratel_demo.handler",
