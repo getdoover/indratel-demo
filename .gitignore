@@ -182,3 +182,5 @@ requirements.txt
 dashboard-widget/assets/
 dashboard-widget/node_modules/
 dashboard-widget/dist/
+
+!dashboard-widget/src/lib/**
