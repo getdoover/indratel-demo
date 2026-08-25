@@ -6,6 +6,7 @@ import {useAgentChannel} from "doover-js/react";
 import {RadioTowerIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
+import {ELPRO_LOGO, INDRATEL_LOGO} from "./components/logos";
 import {DiagnosticsPanel} from "./DiagnosticsPanel";
 import {FlowPanel} from "./FlowPanel";
 import {TankPanel} from "./TankPanel";
@@ -103,17 +104,33 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
 
   return (
     <section className="text-foreground w-full space-y-3 py-1">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold tracking-tight">
-          {str(uiElement.site_name, "Site Overview")}
-        </h2>
-        <Badge
-          variant={stale ? "muted" : "success"}
-          title={lastUpdated ? absTime(lastUpdated) : undefined}
-        >
-          <RadioTowerIcon className="size-3" />
-          {lastUpdated ? `updated ${fromNow(lastUpdated)}` : "waiting for data"}
-        </Badge>
+      <header className="flex items-center justify-between gap-3">
+        {/* Logos are inverted to a white silhouette in dark mode — the ELPRO
+            wordmark is navy and would otherwise disappear into the background. */}
+        <img
+          src={INDRATEL_LOGO}
+          alt="Indratel"
+          className="h-7 w-auto shrink-0 sm:h-8 dark:brightness-0 dark:invert"
+        />
+
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <h2 className="truncate text-base font-semibold tracking-tight">
+            {str(uiElement.site_name, "Site Overview")}
+          </h2>
+          <Badge
+            variant={stale ? "muted" : "success"}
+            title={lastUpdated ? absTime(lastUpdated) : undefined}
+          >
+            <RadioTowerIcon className="size-3" />
+            {lastUpdated ? `updated ${fromNow(lastUpdated)}` : "waiting for data"}
+          </Badge>
+        </div>
+
+        <img
+          src={ELPRO_LOGO}
+          alt="ELPRO Technologies"
+          className="h-7 w-auto shrink-0 sm:h-8 dark:brightness-0 dark:invert"
+        />
       </header>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

@@ -3,6 +3,16 @@
 @import "tailwindcss/utilities" layer(doover-admin);
 
 /*
+ * The host switches themes with a `.dark` class on an ancestor, not with
+ * `prefers-color-scheme`. Tailwind's stock `dark:` variant follows the OS
+ * preference, so on a light page viewed from a dark-mode machine every
+ * `dark:` utility fired against a white background — accents washed out, and
+ * the inverted logos turned into white silhouettes on a white card. Bind the
+ * variant to the host's own signal instead.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * The host site (customer_site) defines the shadcn design tokens on :root and
  * flips them for dark mode. We map them into Tailwind's theme so this widget
  * picks up the site's palette automatically. Fallbacks keep the widget legible
