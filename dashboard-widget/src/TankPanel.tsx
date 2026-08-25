@@ -1,4 +1,4 @@
-import {useId} from "react";
+import {memo, useId} from "react";
 import {DropletsIcon, WarningIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
@@ -82,13 +82,11 @@ function TankGraphic({fill, colour, faulted}: TankGraphicProps) {
           {fill > 0.01 && (
             <g style={{transform: `translateY(${top}px)`, transition: "transform 900ms cubic-bezier(0.4, 0, 0.2, 1)"}}>
               <path
-                className="idw-wave"
                 d="M0 4 q 11 -6 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 t 22 0 V 20 H0 Z"
                 fill={colour}
                 fillOpacity="0.45"
               />
               <path
-                className="idw-wave-slow"
                 d="M0 6 q 14 5 28 0 t 28 0 t 28 0 t 28 0 t 28 0 t 28 0 t 28 0 t 28 0 V 20 H0 Z"
                 fill={colour}
                 fillOpacity="0.3"
@@ -130,7 +128,7 @@ function TankGraphic({fill, colour, faulted}: TankGraphicProps) {
   );
 }
 
-export function TankPanel({tank}: {tank: TankSource}) {
+function TankPanelInner({tank}: {tank: TankSource}) {
   if (!tank.appKey) {
     return (
       <Card>
@@ -212,3 +210,10 @@ export function TankPanel({tank}: {tank: TankSource}) {
     </Card>
   );
 }
+
+/**
+ * Memoised: the widget re-renders on every live tag update, but the source
+ * objects are value-stable (see `useStable`), so this only re-runs when
+ * something it shows has actually changed.
+ */
+export const TankPanel = memo(TankPanelInner);

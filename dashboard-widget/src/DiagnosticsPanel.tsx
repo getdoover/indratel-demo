@@ -1,3 +1,4 @@
+import {memo} from "react";
 import {
   AntennaIcon,
   BatteryIcon,
@@ -122,7 +123,7 @@ function radioHint(diagnostics: DiagnosticsSource): string | undefined {
   return [frequency, power].filter(Boolean).join(" · ") || undefined;
 }
 
-export function DiagnosticsPanel({
+function DiagnosticsPanelInner({
   diagnostics,
   connection,
 }: {
@@ -257,3 +258,10 @@ export function DiagnosticsPanel({
     </Card>
   );
 }
+
+/**
+ * Memoised: the widget re-renders on every live tag update, but the source
+ * objects are value-stable (see `useStable`), so this only re-runs when
+ * something it shows has actually changed.
+ */
+export const DiagnosticsPanel = memo(DiagnosticsPanelInner);

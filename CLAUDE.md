@@ -64,9 +64,20 @@ over everything. The Quantum has KMS (`imx-drm`, HDMI-A-1) but no GPU userspace,
 compositor or browser, so the kiosk is a container: sway (wlroots DRM backend,
 `WLR_RENDERER=pixman`) hosting cog/WPE WebKit, with Mesa's `kms_swrast` for
 software EGL. Output mode is pinned to 1280x720 in the sway config and the page
-is scaled to 0.82 to fit. It costs ~170% of the four cores — that is WPE
-repainting live tag updates in software, not the compositor, which idles at
-0.35% on a blank page.
+is scaled to 0.82 to fit. Keeping its cost down is a widget concern, not a kiosk one — the compositor
+idles at 0.35% on a blank page. Three things were making it repaint constantly:
+a perpetual CSS wave animation (removed — it repainted the page at 60 fps
+whether or not data moved), live tag values carrying jitter well below the
+displayed precision (now quantised in `sources.ts`, so an unchanged reading
+produces an equal object), and every panel re-rendering on every update (now
+`memo` + `useStable`). What remains is the CSS transitions on the tank fill and
+level bar: each 0.1% step starts a 700-900 ms animated transition, which on a
+software renderer is a burst of full-page repaints. Shorten or drop those next
+if the load still matters.
+
+Measure with `docker stats`, and always confirm the kiosk actually reloaded the
+new bundle first — two of the measurements during this work were taken against
+a stale bundle and sent the diagnosis the wrong way twice.
 - All tags for every app on a device live in the single `tag_values` aggregate,
   keyed by app key — one subscription feeds every panel. The platform interface
   publishes hardware diagnostics under the key `platform`, not its install key

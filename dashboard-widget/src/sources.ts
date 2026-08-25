@@ -24,6 +24,29 @@ export function str(value: unknown, fallback: string): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+/**
+ * Round to the precision the panel actually displays.
+ *
+ * The device publishes live tags at ~2 Hz and they jitter in the third decimal
+ * and beyond — 57.611945 then 57.612937 for a tank that has not moved. Carrying
+ * that noise into the source objects meant every sample produced a "different"
+ * object, re-rendering and repainting the whole page for a picture identical to
+ * the last one. Quantising here to what is shown means the objects compare
+ * equal, `useStable` holds the previous one, and nothing repaints until a digit
+ * on screen genuinely changes.
+ */
+export function quantise(value: unknown, decimals: number): number | undefined {
+  if (!isNum(value)) return undefined;
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+/** Round to a whole number of `step` units — for timestamps and uptimes. */
+export function quantiseStep(value: unknown, step: number): number | undefined {
+  if (!isNum(value)) return undefined;
+  return Math.round(value / step) * step;
+}
+
 /** Clamp a value into 0..1 given a range, tolerating a zero-width range. */
 export function fraction(value: number, min: number, max: number): number {
   if (!Number.isFinite(max - min) || max - min === 0) return 0;
@@ -86,11 +109,12 @@ export function buildTank(
   return {
     appKey,
     displayName: displayNameOf(cfg, fallbackName),
-    value: tag.value,
+    // Displayed to 1 dp and 2 dp respectively; see `quantise`.
+    value: quantise(tag.value, 1),
     units: str(cfg?.measurement_units, "%"),
     min: num(cfg?.min_range, 0),
     max: num(cfg?.max_range, 100),
-    rawMilliamps: tag.raw_value,
+    rawMilliamps: quantise(tag.raw_value, 2),
   };
 }
 
@@ -146,25 +170,28 @@ export function buildFlow(
   // The rate label is a config choice on the meter; mirror it so the gauge
   // never claims units the device isn't using.
   const suffix = RATE_SUFFIXES[str(cfg?.flow_rate_time_base, "Per Hour")] ?? "/hr";
+  const ratePrecision = num(cfg?.flow_decimal_precision, 1);
 
   return {
     appKey,
     displayName: displayNameOf(cfg, fallbackName),
     meterMode: str(cfg?.meter_mode, "Pulse"),
-    flowRate: tag.flow_rate,
-    totaliser: tag.totaliser,
+    flowRate: quantise(tag.flow_rate, ratePrecision),
+    totaliser: quantise(tag.totaliser, 0),
     flowActive: tag.flow_active,
-    eventStarted: tag.event_started,
-    eventVolume: tag.event_volume,
-    eventPeakFlow: tag.event_peak_flow,
+    // Timestamps only ever render as relative text, so second resolution is
+    // more than the display can show.
+    eventStarted: quantiseStep(tag.event_started, 1000),
+    eventVolume: quantise(tag.event_volume, 0),
+    eventPeakFlow: quantise(tag.event_peak_flow, ratePrecision),
     lastEventSummary: tag.last_event_summary,
-    pulseCount: tag.pulse_count,
-    lastPulseAt: tag.last_pulse_dt,
+    pulseCount: quantise(tag.pulse_count, 0),
+    lastPulseAt: quantiseStep(tag.last_pulse_dt, 1000),
     sensorFaultHidden: tag.sensor_fault_hidden,
     volumeUnits,
     rateUnits: `${volumeUnits}${suffix}`,
     maxFlow: num(cfg?.maximum_flow, 1000),
-    ratePrecision: num(cfg?.flow_decimal_precision, 1),
+    ratePrecision,
     kFactor: num(cfg?.kfactor_pulses_per_unit, 1),
   };
 }
@@ -315,34 +342,35 @@ export function buildDiagnostics(
     unitModel: elpro.unit_model,
     firmwareVersion: elpro.unit_firmware ?? platform.firmware_version,
 
-    batteryVoltage: elpro.battery_voltage_v ?? platform.voltage,
-    batteryCurrent: elpro.battery_current_a,
-    batteryPower: elpro.battery_power_w ?? platform.power_watts,
+    batteryVoltage: quantise(elpro.battery_voltage_v ?? platform.voltage, 2),
+    batteryCurrent: quantise(elpro.battery_current_a, 2),
+    batteryPower: quantise(elpro.battery_power_w ?? platform.power_watts, 2),
     activeSource: elpro.active_source,
     runningOnBattery: elpro.running_on_battery === true,
 
     chargerPresent: elpro.charger_present === true,
-    chargeVoltage: elpro.charge_voltage_v,
+    chargeVoltage: quantise(elpro.charge_voltage_v, 1),
     chargerStatus: elpro.charger_status,
     chargerCharging: elpro.charger_charging === true,
-    chargerInputPower: elpro.charger_input_power_w,
-    maxChargeCurrent: elpro.max_charge_current_a,
+    chargerInputPower: quantise(elpro.charger_input_power_w, 1),
+    maxChargeCurrent: quantise(elpro.max_charge_current_a, 1),
 
     radioPresent: elpro.radio_present === true,
     radioInitialised: elpro.radio_initialised === true,
     radioAlarm: elpro.radio_alarm === true,
     radioState: elpro.radio_driver_state ?? elpro.radio_state,
     radioDriverState: elpro.radio_driver_state,
-    radioUptimeSeconds: elpro.radio_uptime_s,
-    rssiDbm: elpro.rssi_last_dbm ?? elpro.rssi_dbm,
-    rssiBackgroundDbm: elpro.rssi_background_dbm,
+    // Rendered as "10d 22h", so anything finer than a minute is invisible.
+    radioUptimeSeconds: quantiseStep(elpro.radio_uptime_s, 60),
+    rssiDbm: quantise(elpro.rssi_last_dbm ?? elpro.rssi_dbm, 0),
+    rssiBackgroundDbm: quantise(elpro.rssi_background_dbm, 0),
     weakSignalDbm: num(elproConfig?.weak_signal_threshold_dbm, -100),
-    txFrequencyMhz: elpro.tx_frequency_mhz,
-    txPowerDbm: elpro.tx_power_dbm,
-    paTemperatureC: elpro.pa_temperature_c,
+    txFrequencyMhz: quantise(elpro.tx_frequency_mhz, 1),
+    txPowerDbm: quantise(elpro.tx_power_dbm, 0),
+    paTemperatureC: quantise(elpro.pa_temperature_c, 0),
 
-    temperatureC: platform.temperature_c,
-    uptimeSeconds: platform.uptime_s,
+    temperatureC: quantise(platform.temperature_c, 1),
+    uptimeSeconds: quantiseStep(platform.uptime_s, 60),
   };
 }
 
@@ -351,7 +379,7 @@ export function buildConnection(connection: Record<string, any> | undefined): Co
   return {
     determination: typeof connection?.determination === "string" ? connection.determination : null,
     status: typeof status.status === "string" ? status.status : null,
-    latencyMs: status.latency_ms,
-    lastOnline: status.last_online,
+    latencyMs: quantise(status.latency_ms, 0),
+    lastOnline: quantiseStep(status.last_online, 1000),
   };
 }

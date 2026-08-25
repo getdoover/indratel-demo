@@ -117,7 +117,7 @@ describe("buildTank", () => {
     expect(tank).toMatchObject({
       appKey: "4_20ma_sensor_1",
       displayName: "Tank Level 1",
-      value: 3.15,
+      value: 3.2, // quantised to the 1 dp the panel shows
       units: "%",
       min: 0,
       max: 100,
@@ -145,6 +145,14 @@ describe("buildFlow", () => {
     expect(flow.maxFlow).toBe(500);
   });
 
+  it("quantises noisy live values to what the panel displays", () => {
+    // A tank that has not moved jitters in the third decimal at 2 Hz; the
+    // source object must not change or the whole page repaints for nothing.
+    const a = buildTank("4_20ma_sensor_1", APPLICATIONS, {"4_20ma_sensor_1": {value: 57.611945, raw_value: 13.2180}}, 0, "T");
+    const b = buildTank("4_20ma_sensor_1", APPLICATIONS, {"4_20ma_sensor_1": {value: 57.612937, raw_value: 13.2179}}, 0, "T");
+    expect(a).toEqual(b);
+  });
+
   it("leaves tags undefined when the meter hasn't reported", () => {
     const flow = buildFlow("analog_flow_meter_2", APPLICATIONS, TAGS, 1, "Flow 2");
     expect(flow.flowRate).toBeUndefined();
@@ -166,8 +174,9 @@ describe("buildDiagnostics", () => {
 
   it("prefers the ELPRO app's battery rail over the platform's plain voltage", () => {
     expect(diagnostics.detailed).toBe(true);
-    expect(diagnostics.batteryVoltage).toBe(11.957);
-    expect(diagnostics.batteryCurrent).toBe(-0.528);
+    // Quantised to the precision each tile displays.
+    expect(diagnostics.batteryVoltage).toBe(11.96);
+    expect(diagnostics.batteryCurrent).toBe(-0.53);
     expect(diagnostics.runningOnBattery).toBe(true);
   });
 
@@ -185,7 +194,7 @@ describe("buildDiagnostics", () => {
   it("falls back to the platform interface when the ELPRO app is absent", () => {
     const fallback = buildDiagnostics(undefined, "platform", {}, {platform: TAGS.platform});
     expect(fallback.detailed).toBe(false);
-    expect(fallback.batteryVoltage).toBe(11.955);
+    expect(fallback.batteryVoltage).toBe(11.96);
     expect(fallback.reporting).toBe(true);
   });
 

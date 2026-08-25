@@ -1,5 +1,5 @@
 import "./styles.css";
-import {useMemo} from "react";
+
 import RemoteComponentWrapper from "customer_site/RemoteComponentWrapper";
 import {useRemoteParams} from "customer_site/useRemoteParams";
 import {useAgentChannel} from "doover-js/react";
@@ -11,11 +11,13 @@ import {DiagnosticsPanel} from "./DiagnosticsPanel";
 import {FlowPanel} from "./FlowPanel";
 import {TankPanel} from "./TankPanel";
 import {absTime, fromNow, isNum, secondsSince} from "./lib/format";
+import {useStable} from "./lib/stable";
 import {
   buildConnection,
   buildDiagnostics,
   buildFlow,
   buildTank,
+  quantiseStep,
   str,
   type DeploymentConfig,
   type TagBag,
@@ -50,33 +52,23 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
   const tags = tagsQuery.data ?? {};
   const applications = configQuery.data?.applications ?? {};
 
-  const tanks = useMemo(
-    () => [
-      buildTank(uiElement.tank_1_app, applications, tags, 0, "Tank 1"),
-      buildTank(uiElement.tank_2_app, applications, tags, 1, "Tank 2"),
-    ],
-    [uiElement.tank_1_app, uiElement.tank_2_app, applications, tags],
+  // The builders are cheap and run every render; `useStable` is what keeps the
+  // result identity-stable, so the memoised panels below only re-render when a
+  // value they display has moved. Without it a 2 Hz tag feed repaints the whole
+  // page twice a second for an identical picture — which on the Quantum's
+  // software renderer is most of a CPU core per panel.
+  const tank1 = useStable(buildTank(uiElement.tank_1_app, applications, tags, 0, "Tank 1"));
+  const tank2 = useStable(buildTank(uiElement.tank_2_app, applications, tags, 1, "Tank 2"));
+  const flow1 = useStable(buildFlow(uiElement.flow_1_app, applications, tags, 0, "Flow Meter 1"));
+  const flow2 = useStable(buildFlow(uiElement.flow_2_app, applications, tags, 1, "Flow Meter 2"));
+  const diagnostics = useStable(
+    buildDiagnostics(uiElement.elpro_app, uiElement.platform_app, applications, tags),
   );
+  const connection = useStable(buildConnection(connectionQuery.data));
 
-  const flows = useMemo(
-    () => [
-      buildFlow(uiElement.flow_1_app, applications, tags, 0, "Flow Meter 1"),
-      buildFlow(uiElement.flow_2_app, applications, tags, 1, "Flow Meter 2"),
-    ],
-    [uiElement.flow_1_app, uiElement.flow_2_app, applications, tags],
-  );
-
-  const diagnostics = useMemo(
-    () => buildDiagnostics(uiElement.elpro_app, uiElement.platform_app, applications, tags),
-    [uiElement.elpro_app, uiElement.platform_app, applications, tags],
-  );
-
-  const connection = useMemo(
-    () => buildConnection(connectionQuery.data),
-    [connectionQuery.data],
-  );
-
-  const lastUpdated = tagsQuery.last_updated;
+  // Quantised to the second: the header only ever shows relative text, so a
+  // millisecond-precision timestamp would re-render it on every single update.
+  const lastUpdated = quantiseStep(tagsQuery.last_updated, 1000);
   const age = secondsSince(lastUpdated);
   const stale = age == null || age > STALE_AFTER_SECONDS;
 
@@ -134,15 +126,13 @@ function IndratelDemoWidgetContent({uiElement}: {uiElement: IndratelDemoElement}
       </header>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {tanks.map((tank, index) => (
-          <TankPanel key={tank.appKey ?? `tank-${index}`} tank={tank} />
-        ))}
+        <TankPanel tank={tank1} />
+        <TankPanel tank={tank2} />
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {flows.map((flow, index) => (
-          <FlowPanel key={flow.appKey ?? `flow-${index}`} flow={flow} />
-        ))}
+        <FlowPanel flow={flow1} />
+        <FlowPanel flow={flow2} />
       </div>
 
       {uiElement.show_diagnostics !== false && (

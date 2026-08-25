@@ -45,25 +45,13 @@
   --radius-xl: calc(var(--radius, 0.625rem) + 4px);
 }
 
-/* Liquid surface ripple for the tank graphics. */
-@keyframes idw-wave {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-.idw-wave {
-  animation: idw-wave 7s linear infinite;
-}
-
-@keyframes idw-wave-slow {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-.idw-wave-slow {
-  animation: idw-wave-slow 11s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .idw-wave, .idw-wave-slow { animation: none; }
-}
+/*
+ * The tank surface is drawn as two offset sine paths, but they no longer slide.
+ *
+ * A perpetual `translateX` animation repaints the whole page at 60 fps whether
+ * or not any data moved. On the Quantum's HDMI output — where this same widget
+ * is composited in software with no GPU — that decorative slide cost about 170%
+ * of four cores, against 0.35% for a still page. The waves still give the
+ * liquid a surface; what moves now is the level itself, which is the only
+ * motion that means anything.
+ */

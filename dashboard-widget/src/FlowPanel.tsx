@@ -1,3 +1,4 @@
+import {memo} from "react";
 import {ActivityIcon, GaugeIcon, WarningIcon, WavesIcon} from "./components/icons";
 
 import {Badge} from "./components/ui/badge";
@@ -67,7 +68,7 @@ function FlowGauge({fraction: frac, active}: {fraction: number; active: boolean}
   );
 }
 
-export function FlowPanel({flow}: {flow: FlowSource}) {
+function FlowPanelInner({flow}: {flow: FlowSource}) {
   if (!flow.appKey) {
     return (
       <Card>
@@ -178,3 +179,10 @@ export function FlowPanel({flow}: {flow: FlowSource}) {
     </Card>
   );
 }
+
+/**
+ * Memoised: the widget re-renders on every live tag update, but the source
+ * objects are value-stable (see `useStable`), so this only re-runs when
+ * something it shows has actually changed.
+ */
+export const FlowPanel = memo(FlowPanelInner);
