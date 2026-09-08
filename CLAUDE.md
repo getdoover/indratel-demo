@@ -21,7 +21,7 @@ doover app publish                       # exports both schemas, builds + upload
 ## Structure
 
 ```
-src/indratel_demo/{__init__,application,app_config,app_ui}.py
+src/indratel_demo/{__init__,application,app_config,app_ui,widget_channel}.py
 dashboard-widget/src/IndratelDemoWidget.tsx           # subscriptions + layout
 dashboard-widget/src/sources.ts                       # pure, tested aggregate -> props
 dashboard-widget/src/{Tank,Flow,Diagnostics}Panel.tsx
@@ -30,6 +30,15 @@ dashboard-widget/src/components/ui/                   # shadcn-style primitives
 
 ## Conventions that matter here
 
+- **The widget channel mirrors the resolved `uiRemoteComponent` node.**
+  `application.py` merges `scope`, `module` and the resolved props into
+  `<install>_widget` on every deployment / config change (skipping when
+  unchanged). A device-local HMI renders through the device agent's viewer,
+  which never has this cloud app's `ui_state` node and otherwise falls back to
+  sniffing the bundle's `uniqueName` — hashed by the federation toolchain — and
+  fails with `Remote container "IndratelDemoWidget_<hash>" is not available`.
+  Keep `scope`/`module` in `app_ui.py` in sync with `rsbuild.config.ts`; see
+  `widget_channel.py`.
 - **Config element names come from the display name**, not the attribute name
   (`config.String("Tank 1 App")` -> key `tank_1_app`). Keep the attribute name
   and the sanitized display name identical, or `$config.app().<key>` in

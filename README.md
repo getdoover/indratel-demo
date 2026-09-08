@@ -89,6 +89,7 @@ doover app publish
 | Path | Purpose |
 |---|---|
 | `src/indratel_demo/` | Companion processor and remote-component registration |
+| `src/indratel_demo/widget_channel.py` | Mirrors the resolved widget node into `<install>_widget` so a device-local HMI can resolve the federation container |
 | `tests/` | Import, wiring, and config-reference checks |
 | `dashboard-widget/src/IndratelDemoWidget.tsx` | Channel subscriptions and page layout |
 | `dashboard-widget/src/sources.ts` | Tested helpers that turn aggregates into panel props |
