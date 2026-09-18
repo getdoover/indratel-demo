@@ -7,7 +7,7 @@
         "allow_many": false,
         "description": "Site overview for the Indratel demo device - tank levels, pulse flow meters and Elpro diagnostics in one panel.",
         "long_description": "README.md",
-        "icon_url": "",
+        "icon_url": "https://cdn.jsdelivr.net/gh/getdoover/app-icons@126ec9f5ce22d9d5c100013a7da2740233f0720b/icons/customer-indratel-square.png",
         "depends_on": [],
         "organisation_id": 182001610510090497,
         "widget": "dashboard-widget/assets/IndratelDemoWidget.js",
